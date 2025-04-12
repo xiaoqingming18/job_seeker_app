@@ -950,8 +950,7 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- Update Password API -->
+                  <!-- Update Password API -->
                 <div class="api-endpoint">
                     <div class="endpoint-header">
                         <span class="http-method method-post">POST</span>
@@ -1038,6 +1037,80 @@
   "message": "success"
 }</code></pre>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Verify Token API -->
+                <div class="api-endpoint">
+                    <div class="endpoint-header">
+                        <span class="http-method method-get">GET</span>
+                        <span class="endpoint-path">/user/verify-token</span>
+                        <span class="endpoint-summary">验证令牌有效性</span>
+                    </div>
+                    <div class="endpoint-content">
+                        <p>验证用户令牌的有效性，并返回用户角色信息，可用于前端权限控制和验证登录状态。</p>
+                        
+                        <h3 class="section-title">请求头</h3>
+                        <table class="param-table">
+                            <thead>
+                                <tr>
+                                    <th>参数名</th>
+                                    <th>类型</th>
+                                    <th>是否必须</th>
+                                    <th>描述</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Authorization</td>
+                                    <td>String</td>
+                                    <td class="param-required">必须</td>
+                                    <td>Bearer 令牌</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3 class="section-title">响应示例 - 有效令牌</h3>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>JSON</span>
+                                <button class="copy-button" data-clipboard-target="#verify-token-success">复制</button>
+                            </div>
+                            <pre id="verify-token-success"><code>{
+  "code": 0,
+  "data": {
+    "valid": true,
+    "userId": 3,
+    "username": "zhangsan",
+    "role": "job_seeker"
+  },
+  "message": "success"
+}</code></pre>
+                        </div>
+                        
+                        <h3 class="section-title">响应示例 - 无效令牌</h3>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>JSON</span>
+                                <button class="copy-button" data-clipboard-target="#verify-token-invalid">复制</button>
+                            </div>
+                            <pre id="verify-token-invalid"><code>{  "code": 0,
+  "data": {
+    "valid": true,
+    "userId": 1,
+    "username": "user123",
+    "role": "job_seeker"
+  },
+  "message": "success"
+}</code></pre>
+                        </div>
+                        
+                        <h3 class="section-title">说明</h3>
+                        <ul>
+                            <li>令牌无效或过期时，实际上可能会由JWT过滤器直接拦截并返回401错误</li>
+                            <li>当用户在应用中操作时，可定期调用此接口检验令牌是否仍然有效</li>
+                            <li>可根据返回的用户角色信息进行前端页面权限控制</li>
+                        </ul>
                     </div>
                 </div>
             </div>

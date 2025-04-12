@@ -266,4 +266,22 @@ class UserApiService {
   Future<void> logout() async {
     await _httpClient.clearToken();
   }
+
+  /// 验证令牌有效性
+  Future<ApiResponse<TokenVerificationResponse>> verifyToken() async {
+    try {
+      final response = await _httpClient.get('/user/verify-token');
+      
+      return ApiResponse<TokenVerificationResponse>.fromJson(
+        response.data,
+        (data) => TokenVerificationResponse.fromJson(data),
+      );
+    } catch (e) {
+      // 处理错误
+      return ApiResponse<TokenVerificationResponse>(
+        code: 500,
+        message: '验证令牌失败: ${e is DioException ? e.message : e.toString()}',
+      );
+    }
+  }
 }

@@ -118,3 +118,46 @@ class UserModel {
     return data;
   }
 }
+
+/// Token 验证响应模型
+class TokenVerificationResponse {
+  /// 是否有效
+  final bool valid;
+  
+  /// 用户ID
+  final int userId;
+  
+  /// 用户名
+  final String username;
+  
+  /// 用户角色
+  final String role;
+
+  /// 构造函数
+  TokenVerificationResponse({
+    required this.valid,
+    required this.userId,
+    required this.username,
+    required this.role,
+  });
+
+  /// 从 JSON 对象创建实例
+  factory TokenVerificationResponse.fromJson(Map<String, dynamic> json) {
+    return TokenVerificationResponse(
+      valid: json['valid'] as bool,
+      userId: json['userId'] as int,
+      username: json['username'] as String,
+      role: json['role'] as String,
+    );
+  }
+
+  /// 将实例转换为 JSON 对象
+  Map<String, dynamic> toJson() {
+    return {
+      'valid': valid,
+      'userId': userId,
+      'username': username,
+      'role': role,
+    };
+  }
+}
