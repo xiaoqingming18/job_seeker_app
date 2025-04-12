@@ -86,4 +86,5 @@ class HomeController extends GetxController {
       Get.snackbar('错误', '退出登录失败：${e.toString()}');
     }
   }
+
 }

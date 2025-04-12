@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../models/user_model.dart';
+import '../../../../routes/app_pages.dart';
 import '../../controllers/home_controller.dart';
 
 class ProfilePage extends GetView<HomeController> {
@@ -96,14 +97,13 @@ class ProfilePage extends GetView<HomeController> {
                           final userProfile = controller.cachedUserProfile.value;
                           
 
-                          return ListTile(
-                            leading: CircleAvatar(
+                          return ListTile(                            leading: CircleAvatar(
                               radius: 25,
                               backgroundColor: Colors.blue,
-                              backgroundImage: userProfile?.avatar != null && userProfile!.avatar!.isNotEmpty
-                                  ? NetworkImage(userProfile.avatar!)
+                              backgroundImage: _isValidImageUrl(userProfile?.avatar)
+                                  ? NetworkImage(userProfile!.avatar!)
                                   : null,
-                              child: userProfile?.avatar == null || userProfile!.avatar!.isEmpty
+                              child: !_isValidImageUrl(userProfile?.avatar)
                                   ? const Icon(
                                       Icons.person,
                                       color: Colors.white,
@@ -117,12 +117,10 @@ class ProfilePage extends GetView<HomeController> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            subtitle: Text(userProfile?.mobile ?? userProfile?.email ?? '查看或编辑个人信息'),
-                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                            subtitle: Text(userProfile?.mobile ?? userProfile?.email ?? '查看或编辑个人信息'),                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                             onTap: () {
-                              Get.snackbar('用户资料', _formatUserProfile(userProfile),
-                                duration: const Duration(seconds: 8),
-                                snackPosition: SnackPosition.BOTTOM);
+                              // 导航到个人资料编辑页面
+                              Get.toNamed(Routes.PROFILE_EDIT);
                             },
                           );
                         }),
@@ -241,5 +239,21 @@ class ProfilePage extends GetView<HomeController> {
     if (profile.skill != null) buffer.writeln('技能: ${profile.skill}');
     
     return buffer.toString();
+  }
+  
+  /// 检查URL是否为有效的图片URL
+  bool _isValidImageUrl(String? url) {
+    if (url == null || url.isEmpty) {
+      return false;
+    }
+    
+    // 检查URL是否以http://或https://开头
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return false;
+    }
+    
+    // 添加更多验证逻辑如果需要
+    
+    return true;
   }
 }
