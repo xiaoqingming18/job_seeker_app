@@ -243,13 +243,12 @@ class AuthView extends GetView<AuthController> {
             )),
             
             const SizedBox(height: 16), // 减小登录按钮上方间距
-            
-            // 登录按钮
+              // 登录按钮
             SizedBox(
               width: double.infinity,
               height: 34,
-              child: ElevatedButton(
-                onPressed: controller.login,
+              child: Obx(() => ElevatedButton(
+                onPressed: controller.isLoading.value ? null : controller.login,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
@@ -260,27 +259,36 @@ class AuthView extends GetView<AuthController> {
                 ),
                 child: Ink(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       colors: [
-                        Color(0xFFFF7BCA),
-                        Color(0xFFDA5DFF),
+                        controller.isLoading.value ? Colors.grey.shade400 : Color(0xFFFF7BCA),
+                        controller.isLoading.value ? Colors.grey.shade500 : Color(0xFFDA5DFF),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Container(
                     alignment: Alignment.center,
-                    child: const Text(
-                      '登录',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: controller.isLoading.value
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            '登录',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
-              ),
+              )),
             ),
             
             // 其他登录方式或找回密码
