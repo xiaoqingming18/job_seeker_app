@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../routes/app_pages.dart';
@@ -5,17 +6,20 @@ import '../../../services/api/http_client.dart';
 import '../../../services/api/user_api_service.dart';
 
 class HomeController extends GetxController {
-  // 控制器状态或变量
-  final count = 0.obs;
-  
   // API 服务
   final UserApiService _userApiService = UserApiService();
   final HttpClient _httpClient = HttpClient();
+  
+  // 当前选中的导航索引
+  final selectedIndex = 0.obs;
+  // 页面控制器
+  late PageController pageController;
 
   @override
   void onInit() {
     super.onInit();
-    // 初始化逻辑
+    // 初始化页面控制器
+    pageController = PageController(initialPage: selectedIndex.value);
   }
 
   @override
@@ -26,12 +30,20 @@ class HomeController extends GetxController {
 
   @override
   void onClose() {
+    // 销毁页面控制器
+    pageController.dispose();
     super.onClose();
-    // 清理资源
   }
-
-  // 增加计数的方法（示例）
-  void increment() => count.value++;
+  
+  /// 切换页面
+  void changePage(int index) {
+    selectedIndex.value = index;
+    pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
   
   /// 退出登录
   void logout() async {

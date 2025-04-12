@@ -1,83 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
+import 'pages/projects_page.dart';
+import 'pages/messages_page.dart';
+import 'pages/profile_page.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('首页'),
-        centerTitle: true,
-        actions: [
-          // 添加退出登录按钮到应用栏
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              // 显示确认对话框
-              Get.dialog(
-                AlertDialog(
-                  title: const Text('退出登录'),
-                  content: const Text('确定要退出登录吗？'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: const Text('取消'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Get.back();
-                        controller.logout();
-                      },
-                      child: const Text('确定'),
-                    ),
-                  ],
-                ),
-              );
-            },
-            tooltip: '退出登录',
-          ),
-        ],
-      ),
-      body: Center(
+      body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              '欢迎使用求职招聘系统',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              '您已成功登录',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 40),
-            Obx(() => Text(
-              'Count: ${controller.count}',
-              style: const TextStyle(fontSize: 20),
-            )),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: controller.increment,
-              child: const Text('增加计数'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
+            // 顶部标题栏
+            Obx(() => AppBar(
+              title: Text(
+                _getTitle(controller.selectedIndex.value),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 20),
-            // 添加退出登录按钮到主界面
-            ElevatedButton(
-              onPressed: controller.logout,
-              child: const Text('退出登录'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+              centerTitle: true,
+              elevation: 0,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              foregroundColor: Colors.black87,
+            )),
+              // 页面内容区域
+            Expanded(
+              child: PageView(
+                controller: controller.pageController,
+                physics: const NeverScrollableScrollPhysics(), // 禁用滑动翻页
+                // 移除onPageChanged以避免循环触发changePage
+                children: const [
+                  ProjectsPage(),
+                  MessagesPage(),
+                  ProfilePage(),
+                ],
               ),
             ),
           ],
         ),
       ),
+      // 底部导航栏
+      bottomNavigationBar: Obx(() => NavigationBar(
+        selectedIndex: controller.selectedIndex.value,
+        onDestinationSelected: controller.changePage,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.work_outline),
+            selectedIcon: Icon(Icons.work),
+            label: '项目',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.message_outlined),
+            selectedIcon: Icon(Icons.message),
+            label: '消息',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: '我的',
+          ),
+        ],
+      )),
     );
+  }
+  
+  // 根据索引获取页面标题
+  String _getTitle(int index) {
+    switch (index) {
+      case 0:
+        return '求职项目';
+      case 1:
+        return '消息中心';
+      case 2:
+        return '个人中心';
+      default:
+        return '求职者应用';
+    }
   }
 }
