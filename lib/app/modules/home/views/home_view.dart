@@ -8,23 +8,11 @@ import 'pages/profile_page.dart';
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) {    return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            // 顶部标题栏
-            Obx(() => AppBar(
-              title: Text(
-                _getTitle(controller.selectedIndex.value),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              centerTitle: true,
-              elevation: 0,
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              foregroundColor: Colors.black87,
-            )),
-              // 页面内容区域
+            // 页面内容区域
             Expanded(
               child: PageView(
                 controller: controller.pageController,
