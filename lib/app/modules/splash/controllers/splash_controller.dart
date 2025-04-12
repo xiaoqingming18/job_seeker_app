@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../routes/app_pages.dart';
+import '../../../services/api/user_api_service.dart';
 
 /// 极简的启动页控制器
 class SplashController extends GetxController {
@@ -24,7 +25,7 @@ class SplashController extends GetxController {
       }
     });
   }
-    // 极简版Token检查
+  // 带求职者资料获取的Token检查
   Future<void> _checkTokenSimple() async {
     try {
       debugPrint('======= 正在检查本地TOKEN =======');
@@ -38,6 +39,20 @@ class SplashController extends GetxController {
       
       // 根据结果直接导航
       if (hasToken) {
+        debugPrint('======= 获取求职者资料 =======');
+        
+        // 创建用户API服务实例
+        final userApiService = UserApiService();
+        
+        // 获取并缓存求职者资料
+        try {
+          await userApiService.fetchAndCacheJobseekerProfile();
+          debugPrint('======= 获取求职者资料成功 =======');
+        } catch (e) {
+          debugPrint('======= 获取求职者资料失败: $e =======');
+          // 即使获取资料失败，也继续导航到首页
+        }
+        
         debugPrint('======= 跳转到首页 =======');
         _navigateToHome();
       } else {

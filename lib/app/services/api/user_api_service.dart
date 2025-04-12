@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/api_response.dart';
 import '../../models/auth_model.dart';
@@ -8,6 +11,7 @@ import 'http_client.dart';
 /// 用户模块相关的 API 服务
 class UserApiService {
   final HttpClient _httpClient = HttpClient();
+  static const String _jobseekerProfileKey = 'jobseeker_profile'; // 存储求职者资料的键名
 
   /// 管理员登录
   Future<ApiResponse<AuthModel>> adminLogin({
@@ -56,6 +60,9 @@ class UserApiService {
       // 如果登录成功，保存令牌
       if (apiResponse.isSuccess && apiResponse.data != null) {
         await _httpClient.saveToken(apiResponse.data!.token);
+        
+        // 登录成功后，获取并缓存求职者资料
+        await fetchAndCacheJobseekerProfile();
       }
       
       return apiResponse;
@@ -282,6 +289,64 @@ class UserApiService {
         code: 500,
         message: '验证令牌失败: ${e is DioException ? e.message : e.toString()}',
       );
+    }
+  }
+
+  /// 获取并缓存求职者个人资料
+  Future<ApiResponse<UserModel>> fetchAndCacheJobseekerProfile() async {
+    try {
+      final response = await _httpClient.get('/user/jobseeker-profile');
+      final apiResponse = ApiResponse<UserModel>.fromJson(
+        response.data,
+        (json) => UserModel.fromJson(json),
+      );
+      
+      // 如果获取资料成功，缓存到本地存储
+      if (apiResponse.isSuccess && apiResponse.data != null) {
+        await _cacheJobseekerProfile(apiResponse.data!);
+      }
+      
+      return apiResponse;
+    } catch (e) {
+      // 处理错误
+      return ApiResponse<UserModel>(
+        code: 500,
+        message: '获取个人资料失败: ${e is DioException ? e.message : e.toString()}',
+      );
+    }
+  }  /// 从缓存中获取求职者资料
+  Future<UserModel?> getCachedJobseekerProfile() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? profileJson = prefs.getString(_jobseekerProfileKey);
+      
+      if (profileJson != null && profileJson.isNotEmpty) {
+        return UserModel.fromJson(jsonDecode(profileJson));
+      }
+      return null;
+    } catch (e) {
+      print('获取缓存的求职者资料失败: $e');
+      return null;
+    }
+  }
+
+  /// 缓存求职者资料到本地存储
+  Future<void> _cacheJobseekerProfile(UserModel profile) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_jobseekerProfileKey, jsonEncode(profile.toJson()));
+    } catch (e) {
+      print('缓存求职者资料失败: $e');
+    }
+  }
+
+  /// 清除缓存的求职者资料
+  Future<void> clearCachedJobseekerProfile() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_jobseekerProfileKey);
+    } catch (e) {
+      print('清除缓存的求职者资料失败: $e');
     }
   }
 }

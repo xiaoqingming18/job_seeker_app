@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../models/user_model.dart';
 import '../../../routes/app_pages.dart';
 import '../../../services/api/http_client.dart';
 import '../../../services/api/user_api_service.dart';
@@ -14,18 +15,46 @@ class HomeController extends GetxController {
   final selectedIndex = 0.obs;
   // 页面控制器
   late PageController pageController;
-
+  
+  // 缓存的用户资料
+  final Rx<UserModel?> cachedUserProfile = Rx<UserModel?>(null);
   @override
   void onInit() {
     super.onInit();
     // 初始化页面控制器
     pageController = PageController(initialPage: selectedIndex.value);
+    // 获取缓存的用户资料
+    _loadCachedUserProfile();
   }
 
   @override
   void onReady() {
     super.onReady();
     // 页面加载完成后的逻辑
+  }
+  
+  /// 加载缓存的用户资料
+  Future<void> _loadCachedUserProfile() async {
+    try {
+      print('正在获取缓存的用户资料...');
+      final userProfile = await _userApiService.getCachedJobseekerProfile();
+      if (userProfile != null) {
+        cachedUserProfile.value = userProfile;
+        print('获取缓存的用户资料成功: ${userProfile.toJson()}');
+      } else {
+        print('缓存中没有用户资料，尝试从服务器获取...');
+        // 如果缓存中没有用户资料，尝试从服务器获取
+        final response = await _userApiService.fetchAndCacheJobseekerProfile();
+        if (response.isSuccess && response.data != null) {
+          cachedUserProfile.value = response.data;
+          print('从服务器获取用户资料成功: ${response.data!.toJson()}');
+        } else {
+          print('从服务器获取用户资料失败: ${response.message}');
+        }
+      }
+    } catch (e) {
+      print('获取用户资料时发生错误: $e');
+    }
   }
 
   @override
