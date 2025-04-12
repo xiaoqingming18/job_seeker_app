@@ -4,13 +4,13 @@ import 'package:get/get.dart';
 class AuthController extends GetxController with GetSingleTickerProviderStateMixin {
   // 控制标签页切换
   late TabController tabController;
-  
-  // 表单控制
-  final phoneController = TextEditingController();
+    // 表单控制
+  final usernameController = TextEditingController();
   final passwordController = TextEditingController();
-  final registerPhoneController = TextEditingController();
+  final registerUsernameController = TextEditingController();
   final registerPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final emailController = TextEditingController();
   
   // 当前是否显示密码
   final showPassword = false.obs;
@@ -26,14 +26,14 @@ class AuthController extends GetxController with GetSingleTickerProviderStateMix
     super.onInit();
     tabController = TabController(length: 2, vsync: this);
   }
-
   @override
   void onClose() {
-    phoneController.dispose();
+    usernameController.dispose();
     passwordController.dispose();
-    registerPhoneController.dispose();
+    registerUsernameController.dispose();
     registerPasswordController.dispose();
     confirmPasswordController.dispose();
+    emailController.dispose();
     tabController.dispose();
     super.onClose();
   }
@@ -50,12 +50,11 @@ class AuthController extends GetxController with GetSingleTickerProviderStateMix
   void toggleConfirmPasswordVisibility() {
     showConfirmPassword.value = !showConfirmPassword.value;
   }
-  
-  // 登录逻辑
+    // 登录逻辑
   void login() {
     if (phoneFormKey.currentState!.validate()) {
       // 登录逻辑实现
-      debugPrint('登录成功: ${phoneController.text}');
+      debugPrint('登录成功: ${usernameController.text}');
       // 这里可以调用登录API
     }
   }
@@ -64,17 +63,25 @@ class AuthController extends GetxController with GetSingleTickerProviderStateMix
   void register() {
     if (registerFormKey.currentState!.validate()) {
       // 注册逻辑实现
-      debugPrint('注册成功: ${registerPhoneController.text}');
+      debugPrint('注册成功: ${registerUsernameController.text}, 邮箱: ${emailController.text}');
       // 这里可以调用注册API
     }
   }
-  
-  // 表单验证方法
-  String? validatePhone(String? value) {
+    // 表单验证方法
+  String? validateUsername(String? value) {
     if (value == null || value.isEmpty) {
-      return '请输入手机号码';
-    } else if (!RegExp(r'^1[3-9]\d{9}$').hasMatch(value)) {
-      return '请输入有效的手机号码';
+      return '请输入用户名';
+    } else if (value.length < 3) {
+      return '用户名长度不能少于3位';
+    }
+    return null;
+  }
+  
+  String? validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return '请输入邮箱地址';
+    } else if (!GetUtils.isEmail(value)) {
+      return '请输入有效的邮箱地址';
     }
     return null;
   }

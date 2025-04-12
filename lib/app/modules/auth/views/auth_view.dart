@@ -10,17 +10,19 @@ class AuthView extends GetView<AuthController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        // 紫色渐变背景
+      body: Container(        // 更加鲜明生动的渐变背景
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              Color(0xFF7A35FB),
-              Color(0xFF6345E0),
-              Color(0xFF5753C7),
+              Color(0xFFA78BFA), // 明亮紫色
+              Color(0xFF8B5CF6), // 中等紫色
+              Color(0xFFD8B4FE), // 浅紫罗兰
+              Color(0xFF7C3AED), // 深紫罗兰
+              Color(0xFFC4B5FD), // 淡薰衣草
             ],
+            stops: [0.0, 0.3, 0.5, 0.7, 1.0],
           ),
         ),
         // 使整个内容垂直居中
@@ -33,21 +35,21 @@ class AuthView extends GetView<AuthController> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // 1. 顶部区域 - 欢迎语和SVG图片左右排布
-                    _buildHeaderSection(),
-                    
-                    // 2 & 3. 表单区域（包含标签页切换器）
+                    _buildHeaderSection(),                    // 2 & 3. 表单区域（包含标签页切换器）
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Stack(
-                        children: [
-                          // 1. 首先放置大图片在底层
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.75, // 设置宽度为屏幕宽度的一半
+                        child: Stack(
+                          clipBehavior: Clip.none, // 允许子项溢出Stack的边界
+                          children: [// 1. 首先放置大图片在底层
                           Positioned(
-                            right: -60, // 向右偏移更多，使图片更大部分位于右侧
-                            top: 20, // 距离顶部的位置
+                            right: -80, // 向右偏移部分距离，使图片部分溢出
+                            top: -60, // 向上偏移部分距离，使图片部分溢出
                             child: SvgPicture.asset(
                               'assets/images/login-bg.svg',
-                              height: 350, // 显著增大图片尺寸
-                              width: 350,
+                              height: 280, // 调整图片尺寸，使其更合适
+                              width: 280,
                             ),
                           ),
                           
@@ -57,11 +59,10 @@ class AuthView extends GetView<AuthController> {
                             children: [
                               // 标签页切换器 - 位于表单卡片顶部
                               _buildTabSection(),
-                              
-                              // 表单内容区域 - 使用SizedBox限制高度
+                                // 表单内容区域 - 使用SizedBox限制高度
                               SizedBox(
-                                // 登录表单高度
-                                height: controller.tabController.index == 0 ? 280 : 350,
+                                // 登录表单高度 - 减少高度以减少底部留白
+                                height: controller.tabController.index == 0 ? 210 : 250,
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.95), // 增加轻微透明度，可以隐约看到下面的图片
@@ -96,9 +97,9 @@ class AuthView extends GetView<AuthController> {
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ],                          ),
                         ],
+                      ),
                       ),
                     ),
                     // 为底部留出空间
@@ -182,8 +183,18 @@ class AuthView extends GetView<AuthController> {
             ),
             unselectedLabelColor: Colors.white.withOpacity(0.7),
             tabs: const [
-              Tab(text: "账号登录"),
-              Tab(text: "注册账号"),
+              Tab(
+                child: Text(
+                  "登录账号",
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+              Tab(
+                child: Text(
+                  "注册账号",
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
             ],
             dividerHeight: 0,
             padding: const EdgeInsets.symmetric(vertical: 5.0),
@@ -193,33 +204,28 @@ class AuthView extends GetView<AuthController> {
     );
   }
 
-  // 登录表单 - 更加紧凑的布局
+  // 登录表单
   Widget _buildLoginForm() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 12.0), // 进一步减小内边距
+      padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 12.0), 
       child: Form(
         key: controller.phoneFormKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            // 手机号输入框
+          children: [            // 用户名输入框
             TextFormField(
-              controller: controller.phoneController,
-              keyboardType: TextInputType.phone,
+              controller: controller.usernameController,
               decoration: _inputDecoration(
-                hintText: '请输入手机号/账号',
-                prefixIcon: Icons.phone_android,
+                hintText: '请输入用户名',
+                prefixIcon: Icons.person,
               ),
-              validator: controller.validatePhone,
+              style: const TextStyle(fontSize: 14),
+              validator: controller.validateUsername,
             ),
-            
-            const SizedBox(height: 12), // 进一步减少间距
-            
             // 密码输入框
             Obx(() => TextFormField(
               controller: controller.passwordController,
-              obscureText: !controller.showPassword.value,
-              decoration: _inputDecoration(
+              obscureText: !controller.showPassword.value,              decoration: _inputDecoration(
                 hintText: '请输入您的密码',
                 prefixIcon: Icons.lock_outline,
                 suffixIcon: IconButton(
@@ -228,19 +234,20 @@ class AuthView extends GetView<AuthController> {
                         ? Icons.visibility
                         : Icons.visibility_off,
                     color: Colors.grey,
+                    size: 18,
                   ),
                   onPressed: controller.togglePasswordVisibility,
                 ),
               ),
-              validator: controller.validatePassword,
+              style: const TextStyle(fontSize: 14),              validator: controller.validatePassword,
             )),
             
-            const SizedBox(height: 20), // 进一步减少间距
+            const SizedBox(height: 16), // 减小登录按钮上方间距
             
             // 登录按钮
             SizedBox(
               width: double.infinity,
-              height: 44, // 进一步减小按钮高度
+              height: 34,
               child: ElevatedButton(
                 onPressed: controller.login,
                 style: ElevatedButton.styleFrom(
@@ -266,7 +273,7 @@ class AuthView extends GetView<AuthController> {
                     child: const Text(
                       '登录',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -291,7 +298,7 @@ class AuthView extends GetView<AuthController> {
                     '忘记密码?',
                     style: TextStyle(
                       color: Colors.grey,
-                      fontSize: 13, // 减小字体
+                      fontSize: 12, // 减小字体
                     ),
                   ),
                 ),
@@ -306,7 +313,7 @@ class AuthView extends GetView<AuthController> {
                     '快速登录',
                     style: TextStyle(
                       color: Colors.grey,
-                      fontSize: 13, // 减小字体
+                      fontSize: 12, // 减小字体
                     ),
                   ),
                 ),
@@ -321,30 +328,39 @@ class AuthView extends GetView<AuthController> {
   // 注册表单 - 更加紧凑的布局
   Widget _buildRegisterForm() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 12.0), // 进一步减小内边距
+      padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 12.0),
       child: Form(
         key: controller.registerFormKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            // 手机号输入框
+          children: [            // 用户名输入框
             TextFormField(
-              controller: controller.registerPhoneController,
-              keyboardType: TextInputType.phone,
+              controller: controller.registerUsernameController,
               decoration: _inputDecoration(
-                hintText: '请输入手机号码',
-                prefixIcon: Icons.phone_android,
+                hintText: '请输入用户名',
+                prefixIcon: Icons.person,
               ),
-              validator: controller.validatePhone,
+              style: const TextStyle(fontSize: 14),
+              validator: controller.validateUsername,
             ),
             
-            const SizedBox(height: 12), // 进一步减少间距
+            const SizedBox(height: 8), // 保持一致的间距
             
-            // 密码输入框
+            // 邮箱输入框
+            TextFormField(
+              controller: controller.emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: _inputDecoration(
+                hintText: '请输入邮箱',
+                prefixIcon: Icons.email,
+              ),
+              style: const TextStyle(fontSize: 14),
+              validator: controller.validateEmail,
+            ),
+              // 密码输入框
             Obx(() => TextFormField(
               controller: controller.registerPasswordController,
-              obscureText: !controller.showRegisterPassword.value,
-              decoration: _inputDecoration(
+              obscureText: !controller.showRegisterPassword.value,              decoration: _inputDecoration(
                 hintText: '请设置密码',
                 prefixIcon: Icons.lock_outline,
                 suffixIcon: IconButton(
@@ -353,33 +369,13 @@ class AuthView extends GetView<AuthController> {
                         ? Icons.visibility
                         : Icons.visibility_off,
                     color: Colors.grey,
+                    size: 18,
                   ),
                   onPressed: controller.toggleRegisterPasswordVisibility,
                 ),
               ),
+              style: const TextStyle(fontSize: 14),
               validator: controller.validatePassword,
-            )),
-            
-            const SizedBox(height: 12), // 进一步减少间距
-            
-            // 确认密码输入框
-            Obx(() => TextFormField(
-              controller: controller.confirmPasswordController,
-              obscureText: !controller.showConfirmPassword.value,
-              decoration: _inputDecoration(
-                hintText: '请确认密码',
-                prefixIcon: Icons.lock_outline,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    controller.showConfirmPassword.value
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                    color: Colors.grey,
-                  ),
-                  onPressed: controller.toggleConfirmPasswordVisibility,
-                ),
-              ),
-              validator: controller.validateConfirmPassword,
             )),
             
             const SizedBox(height: 20), // 进一步减少间距
@@ -387,7 +383,7 @@ class AuthView extends GetView<AuthController> {
             // 注册按钮
             SizedBox(
               width: double.infinity,
-              height: 44, // 进一步减小按钮高度
+              height: 34, // 进一步减小按钮高度
               child: ElevatedButton(
                 onPressed: controller.register,
                 style: ElevatedButton.styleFrom(
@@ -413,7 +409,7 @@ class AuthView extends GetView<AuthController> {
                     child: const Text(
                       '注册',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -421,9 +417,7 @@ class AuthView extends GetView<AuthController> {
                   ),
                 ),
               ),
-            ),
-            
-            const SizedBox(height: 8), // 进一步减少间距
+            ), // 进一步减少间距
             
             // 用户协议
             Row(
@@ -486,19 +480,17 @@ class AuthView extends GetView<AuthController> {
     required String hintText,
     required IconData prefixIcon,
     Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      hintText: hintText,
-      hintStyle: const TextStyle(color: Colors.grey),
-      prefixIcon: Icon(prefixIcon, color: const Color(0xFF6345E0)),
+  }) {    return InputDecoration(
+      hintText: hintText,      hintStyle: const TextStyle(color: Colors.grey, fontSize: 12), 
+      prefixIcon: Icon(prefixIcon, color: const Color(0xFF6345E0), size: 16.0),
       suffixIcon: suffixIcon,
-      fillColor: const Color(0xFFF5F6FA), // 浅灰背景适合白色表单卡片
+      fillColor: const Color(0xFFF5F6FA), 
       filled: true,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: BorderSide.none,
       ),
-      contentPadding: const EdgeInsets.symmetric(vertical: 12), // 进一步减小输入框内边距
+      contentPadding: const EdgeInsets.symmetric(vertical: 8), // 减小内边距以降低输入框高度
       errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 10), // 减小错误提示字体
     );
   }
