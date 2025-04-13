@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../models/token_verification_model.dart';
+import '../../../models/user_model.dart';
 import '../../../routes/app_pages.dart';
 import '../../../services/api/user_api_service.dart';
 
@@ -16,6 +18,12 @@ class SettingsController extends GetxController {
   
   // 加载状态
   final RxBool isLoading = false.obs;
+  
+  // 用户信息
+  final Rx<UserModel?> userProfile = Rx<UserModel?>(null);
+  
+  // 手机号状态
+  final RxString phoneTitle = "绑定手机号".obs;
   
   // 是否显示密码
   final RxBool showOldPassword = false.obs;
@@ -37,11 +45,11 @@ class SettingsController extends GetxController {
   // 语言选项
   final RxString selectedLanguage = "中文".obs;
   final List<String> languages = ["中文", "English"];
-
   @override
   void onInit() {
     super.onInit();
     _loadUserPreferences();
+    _loadCachedUserProfile();
   }
 
   @override
@@ -51,6 +59,87 @@ class SettingsController extends GetxController {
     newPasswordController.dispose();
     confirmPasswordController.dispose();
     super.onClose();
+  }
+    // 加载缓存的用户资料
+  Future<void> _loadCachedUserProfile() async {
+    try {
+      final profile = await _userApiService.getCachedJobseekerProfile();
+      if (profile != null) {
+        userProfile.value = profile;
+        
+        // 根据是否有手机号来设置绑定/更换手机号的标题
+        if (profile.mobile != null && profile.mobile!.isNotEmpty) {
+          phoneTitle.value = "更换手机号";
+        } else {
+          phoneTitle.value = "绑定手机号";
+        }
+      }
+    } catch (e) {
+      debugPrint('加载缓存的用户资料失败: $e');
+    }
+  }
+  
+  /// 验证Token是否有效
+  /// 返回true表示有效，false表示无效或过期
+  Future<bool> verifyToken({bool showError = true}) async {
+    try {
+      isLoading.value = true;
+      final response = await _userApiService.verifyToken();
+      
+      if (response.isSuccess && response.data != null && response.data!.valid) {
+        // Token有效
+        return true;
+      } else {
+        // Token无效或过期
+        if (showError) {
+          final message = response.message ?? "登录已过期，请重新登录";
+          Get.snackbar(
+            '提示',
+            message,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red[100],
+            colorText: Colors.red[900],
+            duration: const Duration(seconds: 2),
+            onTap: (_) {
+              _handleTokenExpired();
+            },
+          );
+        }
+        
+        await _handleTokenExpired();
+        return false;
+      }
+    } catch (e) {
+      debugPrint('验证Token出错: $e');
+      if (showError) {
+        Get.snackbar(
+          '错误',
+          '验证登录状态失败，请重新登录',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red[100],
+          colorText: Colors.red[900],
+        );
+      }
+      
+      await _handleTokenExpired();
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+  
+  /// 处理Token过期的情况
+  Future<void> _handleTokenExpired() async {
+    try {
+      // 清除Token
+      await _userApiService.logout();
+      // 延迟一小段时间，让提示消息可以显示
+      await Future.delayed(const Duration(milliseconds: 500));
+      // 跳转到登录页
+      Get.offAllNamed(Routes.AUTH);
+    } catch (e) {
+      debugPrint('处理Token过期出错: $e');
+    }
   }
   
   // 加载用户偏好设置
@@ -142,20 +231,31 @@ class SettingsController extends GetxController {
         newPassword: newPasswordController.text,
         confirmPassword: confirmPasswordController.text,
       );
-      
-      if (result.isSuccess) {
+        if (result.isSuccess) {
+        // 关闭修改密码对话框
+        Get.back();
+        
+        // 显示成功消息
         Get.snackbar(
           '成功',
-          '密码修改成功',
+          '密码修改成功，请重新登录',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green[100],
           colorText: Colors.green[900],
+          duration: const Duration(seconds: 2),
         );
+        
+        // 等待一段时间让用户看到提示
+        await Future.delayed(const Duration(milliseconds: 1500));
         
         // 清除输入框
         oldPasswordController.clear();
         newPasswordController.clear();
         confirmPasswordController.clear();
+        
+        // 清除Token并跳转到登录页
+        await _userApiService.logout();
+        Get.offAllNamed(Routes.AUTH);
       } else {
         Get.snackbar(
           '错误',

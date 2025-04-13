@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../routes/app_pages.dart';
 import '../controllers/settings_controller.dart';
 
 class SettingsView extends GetView<SettingsController> {
@@ -33,7 +34,6 @@ class SettingsView extends GetView<SettingsController> {
       ),
     );
   }
-
   // 用户信息区域
   Widget _buildUserSection() {
     return ListTile(
@@ -53,7 +53,13 @@ class SettingsView extends GetView<SettingsController> {
       ),
       subtitle: const Text('点击编辑个人资料'),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => Get.toNamed('/profile-edit'),
+      onTap: () async {
+        // 验证Token是否过期
+        final isValid = await controller.verifyToken();
+        if (isValid) {
+          Get.toNamed(Routes.PROFILE_EDIT);
+        }
+      },
     );
   }
 
@@ -72,29 +78,42 @@ class SettingsView extends GetView<SettingsController> {
               color: Colors.grey,
             ),
           ),
-        ),
-        ListTile(
+        ),        ListTile(
           leading: const Icon(Icons.lock_outline, color: Colors.blue),
           title: const Text('修改密码'),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => _showChangePasswordDialog(),
-        ),
-        ListTile(
-          leading: const Icon(Icons.phone_android_outlined, color: Colors.blue),
-          title: const Text('绑定手机号'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () {
-            // TODO: 实现手机号绑定功能
-            Get.snackbar('功能开发中', '手机号绑定功能即将上线');
+          onTap: () async {
+            // 验证Token是否过期
+            final isValid = await controller.verifyToken();
+            if (isValid) {
+              _showChangePasswordDialog();
+            }
           },
         ),
+        Obx(() => ListTile(
+          leading: const Icon(Icons.phone_android_outlined, color: Colors.blue),
+          title: Text(controller.phoneTitle.value),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () async {
+            // 验证Token是否过期
+            final isValid = await controller.verifyToken();
+            if (isValid) {
+              // TODO: 实现手机号绑定功能
+              Get.snackbar('功能开发中', '${controller.phoneTitle.value}功能即将上线');
+            }
+          },
+        )),
         ListTile(
           leading: const Icon(Icons.email_outlined, color: Colors.blue),
           title: const Text('修改邮箱'),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () {
-            // TODO: 实现修改邮箱功能
-            Get.snackbar('功能开发中', '修改邮箱功能即将上线');
+          onTap: () async {
+            // 验证Token是否过期
+            final isValid = await controller.verifyToken();
+            if (isValid) {
+              // TODO: 实现修改邮箱功能
+              Get.snackbar('功能开发中', '修改邮箱功能即将上线');
+            }
           },
         ),
       ],
