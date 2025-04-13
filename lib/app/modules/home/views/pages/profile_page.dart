@@ -64,14 +64,13 @@ class ProfilePage extends GetView<HomeController> {
                         ),
                       );
                     },
-                  ),
-                  // 设置图标
+                  ),                  // 设置图标
                   IconButton(
                     icon: const Icon(Icons.settings, color: Colors.black87, size: 16),
                     tooltip: '设置',
                     constraints: const BoxConstraints(),
                     onPressed: () {
-                      Get.snackbar('提示', '设置功能正在开发中...');
+                      Get.toNamed(Routes.SETTINGS); // 跳转到设置页面
                     },
                   ),
                 ],
