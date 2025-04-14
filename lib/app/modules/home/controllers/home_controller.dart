@@ -56,6 +56,29 @@ class HomeController extends GetxController {
       print('获取用户资料时发生错误: $e');
     }
   }
+  
+  /// 刷新用户资料
+  Future<void> refreshUserProfile() async {
+    try {
+      print('正在刷新用户资料...');
+      // 从服务器获取最新的用户资料
+      final response = await _userApiService.fetchAndCacheJobseekerProfile();
+      if (response.isSuccess && response.data != null) {
+        // 更新缓存的用户资料
+        cachedUserProfile.value = response.data;
+        print('刷新用户资料成功: ${response.data!.toJson()}');
+      } else {
+        print('刷新用户资料失败: ${response.message}');
+        // 如果从服务器获取失败，尝试从缓存获取
+        final cachedProfile = await _userApiService.getCachedJobseekerProfile();
+        if (cachedProfile != null) {
+          cachedUserProfile.value = cachedProfile;
+        }
+      }
+    } catch (e) {
+      print('刷新用户资料时发生错误: $e');
+    }
+  }
 
   @override
   void onClose() {

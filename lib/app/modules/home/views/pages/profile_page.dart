@@ -9,6 +9,12 @@ class ProfilePage extends GetView<HomeController> {
   
   @override
   Widget build(BuildContext context) {
+    // 添加一个onInit调用，确保每次页面可见时都重新获取用户资料
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 刷新用户资料数据
+      controller.refreshUserProfile();
+    });
+    
     // 不使用Scaffold，直接返回带有渐变背景的Stack
     // 因为父级HomeView已经提供了Scaffold
     return Stack(
@@ -80,7 +86,8 @@ class ProfilePage extends GetView<HomeController> {
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),                  child: Column(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),                  
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 用户信息栏（透明背景）
@@ -95,8 +102,8 @@ class ProfilePage extends GetView<HomeController> {
                           // 从控制器获取缓存的用户资料
                           final userProfile = controller.cachedUserProfile.value;
                           
-
-                          return ListTile(                            leading: CircleAvatar(
+                          return ListTile(
+                            leading: CircleAvatar(
                               radius: 25,
                               backgroundColor: Colors.blue,
                               backgroundImage: _isValidImageUrl(userProfile?.avatar)
@@ -116,15 +123,18 @@ class ProfilePage extends GetView<HomeController> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            subtitle: Text(userProfile?.mobile ?? userProfile?.email ?? '查看或编辑个人信息'),                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                            onTap: () {
-                              // 导航到个人资料编辑页面
-                              Get.toNamed(Routes.PROFILE_EDIT);
+                            subtitle: Text(userProfile?.mobile ?? userProfile?.email ?? '查看或编辑个人信息'),
+                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                            onTap: () async {
+                              // 导航到个人资料编辑页面，并等待页面关闭
+                              await Get.toNamed(Routes.PROFILE_EDIT);
+                              // 页面返回后刷新用户资料
+                              controller.refreshUserProfile();
                             },
                           );
                         }),
                       ),
-                        // 常用功能栏
+                      // 常用功能栏
                       Card(
                         elevation: 0,
                         color: Colors.white,
@@ -203,7 +213,9 @@ class ProfilePage extends GetView<HomeController> {
                               ),
                             ],
                           ),
-                        ),                      ),                      // 底部留白
+                        ),
+                      ),
+                      // 底部留白
                       const SizedBox(height: 30),
                     ],
                   ),
