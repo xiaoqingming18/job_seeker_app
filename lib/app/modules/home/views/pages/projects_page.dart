@@ -153,7 +153,7 @@ class ProjectsPage extends GetView<HomeController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
+          const Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: const [
