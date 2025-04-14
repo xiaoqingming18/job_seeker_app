@@ -45,16 +45,18 @@ class ProfileEditView extends GetView<ProfileEditController> {
                   Center(
                     child: Stack(
                       children: [
-                        CircleAvatar(
+                        // 头像显示
+                        Obx(() => CircleAvatar(
                           radius: 50,
                           backgroundColor: Colors.blue.shade100,
-                          backgroundImage: controller.userProfile.value?.avatar != null
-                              ? NetworkImage(controller.userProfile.value!.avatar!)
+                          backgroundImage: controller.avatarUrl.isNotEmpty
+                              ? NetworkImage(controller.avatarUrl.value)
                               : null,
-                          child: controller.userProfile.value?.avatar == null
+                          child: controller.avatarUrl.isEmpty
                               ? const Icon(Icons.person, size: 50, color: Colors.blue)
                               : null,
-                        ),
+                        )),
+                        // 更换头像按钮
                         Positioned(
                           bottom: 0,
                           right: 0,
@@ -69,16 +71,23 @@ class ProfileEditView extends GetView<ProfileEditController> {
                                 width: 2,
                               ),
                             ),
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(
-                                Icons.camera_alt,
-                                size: 20,
-                                color: Colors.white,
+                            child: Obx(() => controller.isUploadingAvatar.value
+                              ? const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : IconButton(
+                                padding: EdgeInsets.zero,
+                                icon: const Icon(
+                                  Icons.camera_alt,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                                onPressed: controller.pickAndUploadAvatar,
                               ),
-                              onPressed: () {
-                                Get.snackbar('提示', '头像上传功能正在开发中...');
-                              },
                             ),
                           ),
                         ),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -353,11 +354,46 @@ class UserApiService {
     required File file,
   }) async {
     try {
-      // 创建FormData对象
+      // 验证文件是否是图片
+      final String fileName = file.path.split('/').last;
+      final String extension = fileName.split('.').last.toLowerCase();
+      
+      // 检查文件扩展名是否为常见图片格式
+      final List<String> validImageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+      if (!validImageExtensions.contains(extension)) {
+        return ApiResponse<AvatarUploadModel>(
+          code: 400,
+          message: '只能选择图片文件（JPG, PNG, GIF, BMP, WEBP）',
+        );
+      }
+      
+      // 根据扩展名设置正确的MIME类型
+      String mimeType = 'image/jpeg'; // 默认MIME类型
+      switch (extension) {
+        case 'jpg':
+        case 'jpeg':
+          mimeType = 'image/jpeg';
+          break;
+        case 'png':
+          mimeType = 'image/png';
+          break;
+        case 'gif':
+          mimeType = 'image/gif';
+          break;
+        case 'bmp':
+          mimeType = 'image/bmp';
+          break;
+        case 'webp':
+          mimeType = 'image/webp';
+          break;
+      }
+      
+      // 创建FormData对象，带上正确的MIME类型
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(
           file.path,
-          filename: file.path.split('/').last,
+          filename: fileName,
+          contentType: MediaType.parse(mimeType), // 设置内容类型
         ),
       });
       
