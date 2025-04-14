@@ -118,8 +118,26 @@ class AuthController extends GetxController with GetSingleTickerProviderStateMix
         
         // 处理响应
         if (response.isSuccess) {
-          // 注册成功，跳转到首页
-          Get.offAllNamed(Routes.HOME);
+          // 注册成功，显示成功信息并自动切换到登录页
+          Get.snackbar(
+            '注册成功',
+            '请使用您的账号密码登录',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.withOpacity(0.8),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+          
+          // 填充登录表单并切换到登录页
+          usernameController.text = registerUsernameController.text;
+          passwordController.text = registerPasswordController.text;
+          tabController.animateTo(0); // 切换到登录标签页
+          
+          // 清空注册表单
+          registerUsernameController.clear();
+          registerPasswordController.clear();
+          confirmPasswordController.clear();
+          emailController.clear();
         } else {
           // 显示错误消息
           Get.snackbar(
@@ -140,7 +158,8 @@ class AuthController extends GetxController with GetSingleTickerProviderStateMix
           backgroundColor: Colors.red.withOpacity(0.8),
           colorText: Colors.white,
           duration: const Duration(seconds: 3),
-        );      } finally {
+        );
+      } finally {
         // 无论成功与否，都结束加载状态
         isLoading.value = false;
       }

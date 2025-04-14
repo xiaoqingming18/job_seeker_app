@@ -10,8 +10,13 @@ class AuthModel {
 
   /// 从 JSON 对象创建 AuthModel 实例
   factory AuthModel.fromJson(Map<String, dynamic> json) {
+    // 添加了对null值的处理
+    final tokenValue = json['token'];
+    if (tokenValue == null) {
+      throw FormatException('认证令牌不能为null');
+    }
     return AuthModel(
-      token: json['token'] as String,
+      token: tokenValue as String,
     );
   }
 

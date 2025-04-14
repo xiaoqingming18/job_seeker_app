@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/api_response.dart';
 import '../../models/auth_model.dart';
 import '../../models/user_model.dart';
+import '../../models/avatar_upload_model.dart';
 import 'http_client.dart';
 
 /// 用户模块相关的 API 服务
@@ -142,7 +144,7 @@ class UserApiService {
   }
 
   /// 求职者注册
-  Future<ApiResponse<AuthModel>> jobseekerRegister({
+  Future<ApiResponse<String>> jobseekerRegister({
     required String username,
     required String password,
     required String email,
@@ -156,20 +158,16 @@ class UserApiService {
           'email': email,
         },
       );
-      final apiResponse = ApiResponse<AuthModel>.fromJson(
-        response.data,
-        (json) => AuthModel.fromJson(json),
+      
+      // 直接返回ApiResponse，不再期望返回token
+      return ApiResponse<String>(
+        code: response.data['code'] as int,
+        message: response.data['message'] as String,
+        data: null, // 注册接口不需要返回数据
       );
-      
-      // 如果注册成功，保存令牌
-      if (apiResponse.isSuccess && apiResponse.data != null) {
-        await _httpClient.saveToken(apiResponse.data!.token);
-      }
-      
-      return apiResponse;
     } catch (e) {
       // 处理错误
-      return ApiResponse<AuthModel>(
+      return ApiResponse<String>(
         code: 500,
         message: '注册失败: ${e is DioException ? e.message : e.toString()}',
       );
@@ -347,6 +345,39 @@ class UserApiService {
       await prefs.remove(_jobseekerProfileKey);
     } catch (e) {
       print('清除缓存的求职者资料失败: $e');
+    }
+  }
+
+  /// 上传头像
+  Future<ApiResponse<AvatarUploadModel>> uploadAvatar({
+    required File file,
+  }) async {
+    try {
+      // 创建FormData对象
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          file.path,
+          filename: file.path.split('/').last,
+        ),
+      });
+      
+      // 发送POST请求，上传文件
+      final response = await _httpClient.post(
+        '/file/upload/avatar',
+        data: formData,
+      );
+      
+      // 解析响应数据
+      return ApiResponse<AvatarUploadModel>.fromJson(
+        response.data,
+        (json) => AvatarUploadModel.fromJson(json),
+      );
+    } catch (e) {
+      // 处理错误
+      return ApiResponse<AvatarUploadModel>(
+        code: 500,
+        message: '上传头像失败: ${e is DioException ? e.message : e.toString()}',
+      );
     }
   }
 }
