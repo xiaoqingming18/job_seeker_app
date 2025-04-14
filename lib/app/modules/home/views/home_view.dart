@@ -8,7 +8,8 @@ import 'pages/profile_page.dart';
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
   @override
-  Widget build(BuildContext context) {    return Scaffold(
+  Widget build(BuildContext context) {    
+    return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
@@ -28,28 +29,83 @@ class HomeView extends GetView<HomeController> {
           ],
         ),
       ),
-      // 底部导航栏
-      bottomNavigationBar: Obx(() => NavigationBar(
-        selectedIndex: controller.selectedIndex.value,
-        onDestinationSelected: controller.changePage,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.work_outline),
-            selectedIcon: Icon(Icons.work),
-            label: '项目',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.message_outlined),
-            selectedIcon: Icon(Icons.message),
-            label: '消息',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: '我的',
-          ),
-        ],
-      )),
+      // 自定义底部导航栏 - 高保真实现
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        height: 65,
+        child: Obx(() => Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(0, 'assets/icons/project.png', 'assets/icons/project_active.png', '项目'),
+            _buildNavItem(1, 'assets/icons/message.png', 'assets/icons/message_active.png', '消息'),
+            _buildNavItem(2, 'assets/icons/profile.png', 'assets/icons/profile_active.png', '我的'),
+          ],
+        )),
+      ),
+    );
+  }
+  
+  // 构建导航项
+  Widget _buildNavItem(int index, String iconPath, String activeIconPath, String label) {
+    final bool isSelected = controller.selectedIndex.value == index;
+    
+    // 暂时使用图标代替，后续可以替换为实际图片资源
+    IconData iconData;
+    IconData activeIconData;
+    
+    switch(index) {
+      case 0:
+        iconData = Icons.work_outline;
+        activeIconData = Icons.work;
+        break;
+      case 1:
+        iconData = Icons.message_outlined;
+        activeIconData = Icons.message;
+        break;
+      case 2:
+        iconData = Icons.person_outline;
+        activeIconData = Icons.person;
+        break;
+      default:
+        iconData = Icons.work_outline;
+        activeIconData = Icons.work;
+    }
+    
+    return InkWell(
+      onTap: () => controller.changePage(index),
+      child: Container(
+        width: 80,
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? activeIconData : iconData,
+              size: 28,
+              color: isSelected ? const Color(0xFF1976D2) : Colors.grey,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                color: isSelected ? const Color(0xFF1976D2) : Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
   
