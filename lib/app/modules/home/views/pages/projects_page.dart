@@ -10,17 +10,6 @@ class ProjectsPage extends GetView<HomeController> {
     return Scaffold(
       body: Stack(
         children: [
-          // 背景设计 - 添加建筑行业元素
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              image: const DecorationImage(
-                image: AssetImage('assets/images/construction_bg_pattern.png'),
-                fit: BoxFit.cover,
-                opacity: 0.05, // 透明度很低，作为水印背景
-              ),
-            ),
-          ),
           // 整体可滚动的内容区域
           SingleChildScrollView(
             physics: const BouncingScrollPhysics(),

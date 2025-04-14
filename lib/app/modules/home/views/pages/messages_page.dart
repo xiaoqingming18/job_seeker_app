@@ -5,6 +5,10 @@ import '../../controllers/home_controller.dart';
 class MessagesPage extends GetView<HomeController> {
   const MessagesPage({Key? key}) : super(key: key);
   
+  // 消息类型选择和页面控制
+  static final RxInt _selectedTabIndex = 0.obs;
+  static final PageController _pageController = PageController(initialPage: 0);
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -13,7 +17,7 @@ class MessagesPage extends GetView<HomeController> {
         children: [
           _buildHeader(),
           Expanded(
-            child: _buildMessageList(),
+            child: _buildMessagePageView(),
           ),
         ],
       ),
@@ -75,45 +79,63 @@ class MessagesPage extends GetView<HomeController> {
       ),
       child: Row(
         children: [
-          _buildTab("全部消息", true),
-          _buildTab("系统通知", false),
-          _buildTab("项目消息", false),
+          _buildTab("全部消息", 0),
+          _buildTab("系统通知", 1),
+          _buildTab("项目消息", 2),
         ],
       ),
     );
   }
   
   // 构建单个标签
-  Widget _buildTab(String title, bool isActive) {
+  Widget _buildTab(String title, int index) {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          // 标签切换逻辑
-          Get.snackbar('提示', '消息分类功能正在开发中...');
+          _selectedTabIndex.value = index;
+          _pageController.jumpToPage(index);
         },
-        child: Container(
-          decoration: BoxDecoration(
-            color: isActive ? const Color(0xFF1976D2) : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-              color: isActive ? Colors.white : Colors.grey[600],
+        child: Obx(() {
+          final isActive = _selectedTabIndex.value == index;
+          return Container(
+            decoration: BoxDecoration(
+              color: isActive ? const Color(0xFF1976D2) : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
             ),
-          ),
-        ),
+            alignment: Alignment.center,
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
+                color: isActive ? Colors.white : Colors.grey[600],
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
   
+  // 构建消息页面视图
+  Widget _buildMessagePageView() {
+    return PageView(
+      controller: _pageController,
+      onPageChanged: (index) {
+        _selectedTabIndex.value = index;
+      },
+      children: [
+        _buildMessageList('all'), // 全部消息
+        _buildMessageList('system'), // 系统通知
+        _buildMessageList('project'), // 项目消息
+      ],
+    );
+  }
+  
   // 构建消息列表
-  Widget _buildMessageList() {
+  Widget _buildMessageList(String filterType) {
     // 消息数据模型
-    final List<Map<String, dynamic>> messages = [
+    final List<Map<String, dynamic>> allMessages = [
       {
         'type': 'system',
         'title': '账号安全提醒',
@@ -186,7 +208,15 @@ class MessagesPage extends GetView<HomeController> {
       },
     ];
 
-    if (messages.isEmpty) {
+    // 根据选中的标签过滤消息
+    final List<Map<String, dynamic>> filteredMessages;
+    if (filterType == 'all') {
+      filteredMessages = allMessages;
+    } else {
+      filteredMessages = allMessages.where((message) => message['type'] == filterType).toList();
+    }
+
+    if (filteredMessages.isEmpty) {
       return _buildEmptyState();
     }
 
@@ -196,7 +226,7 @@ class MessagesPage extends GetView<HomeController> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           children: [
-            ...messages.map((message) => _buildMessageItem(message)).toList(),
+            ...filteredMessages.map((message) => _buildMessageItem(message)).toList(),
             // 底部留白
             const SizedBox(height: 80),
           ],
