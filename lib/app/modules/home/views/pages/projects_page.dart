@@ -226,12 +226,10 @@ class ProjectsPage extends GetView<HomeController> {
         scrollDirection: Axis.horizontal,
         children: [
           _buildFilterChip("全部", true),
-          _buildFilterChip("商业建筑", false),
           _buildFilterChip("住宅项目", false),
+          _buildFilterChip("商业建筑", false),
+          _buildFilterChip("工业项目", false),
           _buildFilterChip("市政工程", false),
-          _buildFilterChip("道路桥梁", false),
-          _buildFilterChip("装修工程", false),
-          _buildFilterChip("其他", false),
         ],
       ),
     );
@@ -409,6 +407,17 @@ class ProjectsPage extends GetView<HomeController> {
       }
     }
 
+    // 根据项目类型获取对应图标
+    IconData getProjectTypeIcon(String projectType) {
+      switch (projectType) {
+        case '住宅项目': return Icons.home_work;
+        case '商业建筑': return Icons.business;
+        case '工业项目': return Icons.factory;
+        case '市政工程': return Icons.account_balance;
+        default: return Icons.construction;
+      }
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
@@ -487,7 +496,7 @@ class ProjectsPage extends GetView<HomeController> {
                         Row(
                           children: [
                             Icon(
-                              Icons.business,
+                              getProjectTypeIcon(getProjectType(demand.projectName)),
                               color: Colors.grey[500],
                               size: 14,
                             ),
