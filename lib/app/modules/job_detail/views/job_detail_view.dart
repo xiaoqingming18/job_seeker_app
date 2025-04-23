@@ -320,9 +320,7 @@ class JobDetailView extends GetView<JobDetailController> {
           Expanded(
             flex: 2,
             child: ElevatedButton.icon(
-              onPressed: () {
-                Get.snackbar('提示', '立即申请功能正在开发中...');
-              },
+              onPressed: () => controller.showApplicationForm(),
               icon: const Icon(Icons.send),
               label: const Text('立即申请'),
               style: ElevatedButton.styleFrom(
