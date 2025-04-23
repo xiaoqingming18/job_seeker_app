@@ -129,14 +129,14 @@ class ProjectsPage extends GetView<HomeController> {
   // 特色工种推荐区域
   Widget _buildFeaturedSection() {
     final featuredJobs = [
-      {'name': '砌筑工', 'icon': Icons.domain},
-      {'name': '钢筋工', 'icon': Icons.architecture},
-      {'name': '架子工', 'icon': Icons.view_column},
       {'name': '木工', 'icon': Icons.handyman},
-      {'name': '混凝土工', 'icon': Icons.tonality},
       {'name': '电工', 'icon': Icons.electrical_services},
+      {'name': '钢筋工', 'icon': Icons.architecture},
+      {'name': '砌筑工', 'icon': Icons.domain},
+      {'name': '架子工', 'icon': Icons.view_column},
       {'name': '管道工', 'icon': Icons.plumbing},
       {'name': '焊接工', 'icon': Icons.whatshot},
+      {'name': '混凝土工', 'icon': Icons.tonality},
     ];
 
     return Container(
@@ -407,6 +407,21 @@ class ProjectsPage extends GetView<HomeController> {
       }
     }
 
+    // 根据项目名称猜测项目类型
+    String getProjectType(String projectName) {
+      if (projectName.contains('住宅') || projectName.contains('小区') || projectName.contains('家园') || projectName.contains('公寓')) {
+        return '住宅项目';
+      } else if (projectName.contains('商业') || projectName.contains('商场') || projectName.contains('办公') || projectName.contains('中心')) {
+        return '商业建筑';
+      } else if (projectName.contains('工业') || projectName.contains('工厂') || projectName.contains('制造')) {
+        return '工业项目';
+      } else if (projectName.contains('市政') || projectName.contains('道路') || projectName.contains('桥梁') || projectName.contains('公园')) {
+        return '市政工程';
+      } else {
+        return '商业建筑'; // 默认归类为商业建筑
+      }
+    }
+    
     // 根据项目类型获取对应图标
     IconData getProjectTypeIcon(String projectType) {
       switch (projectType) {
