@@ -215,6 +215,304 @@ class ProfilePage extends GetView<HomeController> {
                           ),
                         ),
                       ),
+                      
+                      // 求职管理功能卡片
+                      Card(
+                        elevation: 0,
+                        color: Colors.white,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '求职管理',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  // 功能卡片1：我的申请
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.toNamed(Routes.MY_APPLICATIONS);
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.assignment_outlined,
+                                          color: Colors.indigo,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('我的申请'),
+                                      ],
+                                    ),
+                                  ),
+                                  // 功能卡片2：我的面试
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '我的面试功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.event_available,
+                                          color: Colors.teal,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('我的面试'),
+                                      ],
+                                    ),
+                                  ),
+                                  // 功能卡片3：录用通知
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '录用通知功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.mark_email_read,
+                                          color: Colors.amber,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('录用通知'),
+                                      ],
+                                    ),
+                                  ),
+                                  // 功能卡片4：工作日历
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '工作日历功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.calendar_today,
+                                          color: Colors.purple,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('工作日历'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      // 工作管理卡片
+                      Card(
+                        elevation: 0,
+                        color: Colors.white,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '工作管理',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  // 功能卡片1：合同管理
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '合同管理功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.file_present,
+                                          color: Colors.brown,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('合同管理'),
+                                      ],
+                                    ),
+                                  ),
+                                  // 功能卡片2：工资查询
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '工资查询功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.account_balance_wallet,
+                                          color: Colors.green,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('工资查询'),
+                                      ],
+                                    ),
+                                  ),
+                                  // 功能卡片3：工作评价
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '工作评价功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.stars,
+                                          color: Colors.deepOrange,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('工作评价'),
+                                      ],
+                                    ),
+                                  ),
+                                  // 功能卡片4：考勤记录
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '考勤记录功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.fact_check,
+                                          color: Colors.blue,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('考勤记录'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      // 支持与帮助卡片
+                      Card(
+                        elevation: 0,
+                        color: Colors.white,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '支持与帮助',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  // 功能卡片1：在线客服
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '在线客服功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.support_agent,
+                                          color: Colors.blue,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('在线客服'),
+                                      ],
+                                    ),
+                                  ),
+                                  // 功能卡片2：意见反馈
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '意见反馈功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.feedback_outlined,
+                                          color: Colors.orange,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('意见反馈'),
+                                      ],
+                                    ),
+                                  ),
+                                  // 功能卡片3：常见问题
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '常见问题功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.help_outline,
+                                          color: Colors.teal,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('常见问题'),
+                                      ],
+                                    ),
+                                  ),
+                                  // 功能卡片4：关于我们
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '关于我们功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.info_outline,
+                                          color: Colors.grey,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('关于我们'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
                       // 底部留白
                       const SizedBox(height: 30),
                     ],

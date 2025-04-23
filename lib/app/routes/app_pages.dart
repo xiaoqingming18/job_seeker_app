@@ -6,6 +6,8 @@ import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/job_detail/bindings/job_detail_binding.dart';
 import '../modules/job_detail/views/job_detail_view.dart';
+import '../modules/my_applications/bindings/my_applications_binding.dart';
+import '../modules/my_applications/views/my_applications_view.dart';
 import '../modules/profile_edit/bindings/profile_edit_binding.dart';
 import '../modules/profile_edit/views/profile_edit_view.dart';
 import '../modules/settings/bindings/settings_binding.dart';
@@ -53,6 +55,13 @@ class AppPages {
       name: _Paths.JOB_DETAIL,
       page: () => const JobDetailView(),
       binding: JobDetailBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.MY_APPLICATIONS,
+      page: () => const MyApplicationsView(),
+      binding: MyApplicationsBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 250),
     ),
