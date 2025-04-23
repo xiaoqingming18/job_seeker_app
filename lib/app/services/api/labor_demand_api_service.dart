@@ -42,4 +42,37 @@ class LaborDemandApiService {
       );
     }
   }
+  
+  /// 获取劳务需求详情
+  Future<ApiResponse<LaborDemandModel>> getLaborDemandDetail(int id) async {
+    try {
+      // 发送请求
+      final response = await _httpClient.get(
+        '/labor-demand/info/$id',
+      );
+      
+      // 解析响应数据
+      final apiResponse = ApiResponse<LaborDemandModel>.fromJson(
+        response.data,
+        (json) => LaborDemandModel.fromJson(json as Map<String, dynamic>),
+      );
+      
+      return apiResponse;
+    } on DioException catch (e) {
+      // 处理Dio异常
+      final message = e.response?.data?['message'] ?? e.message ?? '网络请求失败';
+      return ApiResponse<LaborDemandModel>(
+        code: e.response?.statusCode ?? -1,
+        message: message,
+        data: null,
+      );
+    } catch (e) {
+      // 处理其他异常
+      return ApiResponse<LaborDemandModel>(
+        code: -1,
+        message: e.toString(),
+        data: null,
+      );
+    }
+  }
 } 

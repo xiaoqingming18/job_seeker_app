@@ -418,7 +418,8 @@ class ProjectsPage extends GetView<HomeController> {
       ),
       child: InkWell(
         onTap: () {
-          Get.snackbar('提示', '职位详情功能正在开发中...');
+          // 跳转到职位详情页
+          Get.toNamed('/job-detail', parameters: {'id': demand.id.toString()});
         },
         borderRadius: BorderRadius.circular(8),
         child: Padding(
@@ -526,7 +527,7 @@ class ProjectsPage extends GetView<HomeController> {
                   
                   // 工期标签
                   _buildTag(
-                    '${demand.startDate.substring(5)} ~ ${demand.endDate.substring(5)}', 
+                    '${_formatDate(demand.startDate)} ~ ${_formatDate(demand.endDate)}', 
                     Colors.purple[50]!, 
                     Colors.purple[700]!
                   ),
@@ -622,5 +623,16 @@ class ProjectsPage extends GetView<HomeController> {
         ),
       ),
     );
+  }
+
+  String _formatDate(String? date) {
+    if (date == null || date.isEmpty) {
+      return '未知日期';
+    }
+    // 检查日期格式是否已经是 YYYY-MM-DD
+    if (date.length >= 10 && date.contains('-')) {
+      return date.substring(0, 10); // 只返回 YYYY-MM-DD 部分
+    }
+    return date; // 如果格式不匹配，返回原始字符串
   }
 }
