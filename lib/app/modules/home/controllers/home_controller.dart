@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../models/user_model.dart';
+import '../../../models/labor_demand_model.dart';
 import '../../../routes/app_pages.dart';
 import '../../../services/api/http_client.dart';
 import '../../../services/api/user_api_service.dart';
+import '../../../services/api/labor_demand_api_service.dart';
 
 class HomeController extends GetxController {
   // API 服务
   final UserApiService _userApiService = UserApiService();
+  final LaborDemandApiService _laborDemandApiService = LaborDemandApiService();
   final HttpClient _httpClient = HttpClient();
   
   // 当前选中的导航索引
@@ -18,6 +21,16 @@ class HomeController extends GetxController {
   
   // 缓存的用户资料
   final Rx<UserModel?> cachedUserProfile = Rx<UserModel?>(null);
+
+  // 劳务需求列表数据
+  final laborDemands = <LaborDemandModel>[].obs;
+  final isLoading = false.obs;
+  final hasError = false.obs;
+  final errorMessage = ''.obs;
+  final currentPage = 1.obs;
+  final totalPages = 1.obs;
+  final totalItems = 0.obs;
+  
   @override
   void onInit() {
     super.onInit();
@@ -25,6 +38,8 @@ class HomeController extends GetxController {
     pageController = PageController(initialPage: selectedIndex.value);
     // 获取缓存的用户资料
     _loadCachedUserProfile();
+    // 加载劳务需求列表
+    fetchLaborDemands();
   }
 
   @override
@@ -80,6 +95,64 @@ class HomeController extends GetxController {
     }
   }
 
+  /// 获取劳务需求列表
+  Future<void> fetchLaborDemands({int page = 1, int size = 10}) async {
+    try {
+      // 设置加载状态
+      isLoading.value = true;
+      hasError.value = false;
+      
+      // 构建查询条件
+      final query = LaborDemandQuery(
+        pageNum: page,
+        pageSize: size,
+        // 可以添加更多查询条件
+        status: 'open',
+      );
+      
+      // 发送请求获取劳务需求列表
+      final response = await _laborDemandApiService.getLaborDemandList(query: query);
+      
+      // 处理响应结果
+      if (response.isSuccess && response.data != null) {
+        final pageData = response.data!;
+        // 更新数据
+        laborDemands.value = pageData.records;
+        currentPage.value = pageData.current;
+        totalPages.value = pageData.pages;
+        totalItems.value = pageData.total;
+        print('获取劳务需求列表成功: ${pageData.records.length}条数据');
+      } else {
+        // 设置错误状态
+        hasError.value = true;
+        errorMessage.value = response.message;
+        print('获取劳务需求列表失败: ${response.message}');
+      }
+    } catch (e) {
+      // 设置错误状态
+      hasError.value = true;
+      errorMessage.value = e.toString();
+      print('获取劳务需求列表时发生错误: $e');
+    } finally {
+      // 结束加载状态
+      isLoading.value = false;
+    }
+  }
+  
+  /// 刷新劳务需求列表
+  Future<void> refreshLaborDemands() async {
+    // 重置页码并获取最新数据
+    await fetchLaborDemands(page: 1);
+  }
+  
+  /// 加载更多劳务需求
+  Future<void> loadMoreLaborDemands() async {
+    // 如果当前页小于总页数，则加载下一页
+    if (currentPage.value < totalPages.value) {
+      await fetchLaborDemands(page: currentPage.value + 1);
+    }
+  }
+
   @override
   void onClose() {
     // 销毁页面控制器
@@ -109,5 +182,4 @@ class HomeController extends GetxController {
       Get.snackbar('错误', '退出登录失败：${e.toString()}');
     }
   }
-
 }

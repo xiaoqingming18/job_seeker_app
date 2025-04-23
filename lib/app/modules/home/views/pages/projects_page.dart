@@ -11,14 +11,17 @@ class ProjectsPage extends GetView<HomeController> {
       body: Stack(
         children: [
           // 整体可滚动的内容区域
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              children: [
-                _buildSearchBar(),
-                _buildFeaturedSection(),
-                _buildProjectList(),
-              ],
+          RefreshIndicator(
+            onRefresh: () => controller.refreshLaborDemands(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  _buildSearchBar(),
+                  _buildFeaturedSection(),
+                  _buildLaborDemandList(),
+                ],
+              ),
             ),
           ),
         ],
@@ -143,9 +146,9 @@ class ProjectsPage extends GetView<HomeController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: Row(
-              children: const [
+              children: [
                 Text(
                   "热门工种",
                   style: TextStyle(
@@ -265,80 +268,143 @@ class ProjectsPage extends GetView<HomeController> {
     );
   }
 
-  // 构建项目列表 - 修改为返回Column而不是带滚动功能的ListView
-  Widget _buildProjectList() {
-    // 模拟建筑行业劳务职位数据
-    final jobs = [
-      {
-        'title': '高级砌筑工',
-        'company': '中建三局工程有限公司',
-        'location': '北京·朝阳区',
-        'salary': '350-450/天',
-        'tags': ['经验3年+', '包吃住', '长期稳定'],
-        'projectType': '商业建筑',
-        'isUrgent': true,
-      },
-      {
-        'title': '木工/模板工',
-        'company': '恒大建筑集团',
-        'location': '上海·浦东新区',
-        'salary': '400-500/天',
-        'tags': ['经验5年+', '包吃住', '月结工资'],
-        'projectType': '住宅项目',
-        'isUrgent': false,
-      },
-      {
-        'title': '钢筋工班组',
-        'company': '华润建筑有限公司',
-        'location': '广州·天河区',
-        'salary': '380-450/天',
-        'tags': ['多人招聘', '提供工具', '长期合作'],
-        'projectType': '市政工程',
-        'isUrgent': true,
-      },
-      {
-        'title': '电气安装工',
-        'company': '中铁建设集团',
-        'location': '深圳·南山区',
-        'salary': '320-420/天',
-        'tags': ['持证上岗', '包住宿', '日结工资'],
-        'projectType': '商业建筑',
-        'isUrgent': false,
-      },
-      {
-        'title': '水暖安装工',
-        'company': '万科物业工程部',
-        'location': '杭州·西湖区',
-        'salary': '300-380/天',
-        'tags': ['经验2年+', '提供工具', '月结工资'],
-        'projectType': '住宅项目',
-        'isUrgent': true,
-      },
-    ];
-
+  // 构建劳务需求列表
+  Widget _buildLaborDemandList() {
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 6),
-          ...jobs.map((job) => _buildJobCard(job)).toList(),
-          // 底部留白区域，提高用户体验
-          const SizedBox(height: 80),
-        ],
-      ),
+      child: Obx(() {
+        // 处理加载状态
+        if (controller.isLoading.value && controller.laborDemands.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        
+        // 处理错误状态
+        if (controller.hasError.value && controller.laborDemands.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.red,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '加载失败: ${controller.errorMessage}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: controller.refreshLaborDemands,
+                    child: const Text('重试'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
+        // 处理空数据状态
+        if (controller.laborDemands.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    color: Colors.grey[400],
+                    size: 48,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '暂无劳务需求数据',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
+        // 显示劳务需求列表
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '共找到 ${controller.totalItems} 个需求',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+                // 可以添加排序功能
+                TextButton.icon(
+                  onPressed: () {
+                    Get.snackbar('提示', '排序功能正在开发中...');
+                  },
+                  icon: const Icon(Icons.sort, size: 16),
+                  label: const Text('工资最高'),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 0),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ...controller.laborDemands.map((demand) => _buildLaborDemandCard(demand)).toList(),
+            
+            // 加载更多按钮
+            if (controller.currentPage.value < controller.totalPages.value)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Center(
+                  child: Obx(() => controller.isLoading.value && controller.laborDemands.isNotEmpty
+                    ? const CircularProgressIndicator()
+                    : OutlinedButton(
+                        onPressed: controller.loadMoreLaborDemands,
+                        child: const Text('加载更多'),
+                      ),
+                  ),
+                ),
+              ),
+            
+            // 底部留白区域，提高用户体验
+            const SizedBox(height: 80),
+          ],
+        );
+      }),
     );
   }
 
-  // 构建职位卡片
-  Widget _buildJobCard(Map<String, dynamic> job) {
-    IconData getProjectTypeIcon(String type) {
-      switch (type) {
-        case '商业建筑': return Icons.business;
-        case '住宅项目': return Icons.home_work;
-        case '市政工程': return Icons.account_balance;
-        case '道路桥梁': return Icons.add_road;
-        case '装修工程': return Icons.brush;
+  // 构建劳务需求卡片
+  Widget _buildLaborDemandCard(dynamic demand) {
+    // 根据工种类别获取对应图标
+    IconData getJobTypeIcon(String category) {
+      switch (category) {
+        case '木工': return Icons.handyman;
+        case '电工': return Icons.electrical_services;
+        case '混凝土工': return Icons.tonality;
+        case '钢筋工': return Icons.architecture;
+        case '砌筑工': return Icons.domain;
+        case '架子工': return Icons.view_column;
+        case '管道工': return Icons.plumbing;
+        case '焊接工': return Icons.whatshot;
         default: return Icons.construction;
       }
     }
@@ -362,7 +428,7 @@ class ProjectsPage extends GetView<HomeController> {
             children: [
               Row(
                 children: [
-                  // 公司Logo或项目类型图标
+                  // 项目类型图标
                   Container(
                     width: 50,
                     height: 50,
@@ -372,7 +438,7 @@ class ProjectsPage extends GetView<HomeController> {
                     ),
                     child: Center(
                       child: Icon(
-                        getProjectTypeIcon(job['projectType'] as String),
+                        getJobTypeIcon(demand.jobTypeCategory ?? '其他'),
                         color: const Color(0xFF1976D2),
                         size: 28,
                       ),
@@ -387,7 +453,7 @@ class ProjectsPage extends GetView<HomeController> {
                           children: [
                             Expanded(
                               child: Text(
-                                job['title'] as String,
+                                demand.title,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -397,7 +463,7 @@ class ProjectsPage extends GetView<HomeController> {
                               ),
                             ),
                             Text(
-                              job['salary'] as String,
+                              '${demand.dailyWage.toStringAsFixed(0)}元/天',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -408,7 +474,7 @@ class ProjectsPage extends GetView<HomeController> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${job['company']} · ${job['location']}',
+                          '${demand.companyName} · ${demand.projectAddress ?? '未知地点'}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -420,13 +486,13 @@ class ProjectsPage extends GetView<HomeController> {
                         Row(
                           children: [
                             Icon(
-                              getProjectTypeIcon(job['projectType'] as String),
+                              Icons.business,
                               color: Colors.grey[500],
                               size: 14,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              job['projectType'] as String,
+                              demand.projectName,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[500],
@@ -443,24 +509,60 @@ class ProjectsPage extends GetView<HomeController> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: (job['tags'] as List).map((tag) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(4),
+                children: [
+                  // 招聘人数标签
+                  _buildTag(
+                    '招${demand.headcount}人', 
+                    Colors.blue[50]!, 
+                    Colors.blue[700]!
+                  ),
+                  
+                  // 工作时间标签
+                  _buildTag(
+                    demand.workHours ?? '工作时间未知', 
+                    Colors.green[50]!, 
+                    Colors.green[700]!
+                  ),
+                  
+                  // 工期标签
+                  _buildTag(
+                    '${demand.startDate.substring(5)} ~ ${demand.endDate.substring(5)}', 
+                    Colors.purple[50]!, 
+                    Colors.purple[700]!
+                  ),
+                  
+                  // 住宿标签
+                  if (demand.accommodation)
+                    _buildTag(
+                      '包住宿', 
+                      Colors.orange[50]!, 
+                      Colors.orange[700]!
                     ),
-                    child: Text(
-                      tag as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.blue[700],
-                      ),
+                  
+                  // 餐食标签
+                  if (demand.meals)
+                    _buildTag(
+                      '包餐食', 
+                      Colors.teal[50]!, 
+                      Colors.teal[700]!
                     ),
-                  );
-                }).toList(),
+                ],
               ),
-              if (job['isUrgent'] == true) ...[
+              
+              // 显示要求信息
+              if (demand.requirements != null && demand.requirements!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  '要求: ${demand.requirements}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ],
+              
+              // 显示紧急招聘标签
+              if (demand.status == 'open') ...[
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -499,6 +601,24 @@ class ProjectsPage extends GetView<HomeController> {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+  
+  // 构建标签
+  Widget _buildTag(String text, Color bgColor, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: textColor,
         ),
       ),
     );
