@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/home_controller.dart';
+import '../../../../services/notification_service.dart';
+import '../../../../models/notification_model.dart';
 
 class MessagesPage extends GetView<HomeController> {
   const MessagesPage({Key? key}) : super(key: key);
@@ -11,13 +13,16 @@ class MessagesPage extends GetView<HomeController> {
   
   @override
   Widget build(BuildContext context) {
+    // 获取NotificationService实例
+    final NotificationService notificationService = Get.find<NotificationService>();
+    
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(notificationService),
           Expanded(
-            child: _buildMessagePageView(),
+            child: _buildMessagePageView(notificationService),
           ),
         ],
       ),
@@ -25,7 +30,7 @@ class MessagesPage extends GetView<HomeController> {
   }
   
   // 构建页面头部
-  Widget _buildHeader() {
+  Widget _buildHeader(NotificationService notificationService) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       decoration: BoxDecoration(
@@ -52,13 +57,29 @@ class MessagesPage extends GetView<HomeController> {
                   color: Color(0xFF333333),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.search, color: Color(0xFF666666)),
-                onPressed: () {
-                  Get.snackbar('提示', '搜索功能正在开发中...');
-                },
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+              Row(
+                children: [
+                  // 添加测试按钮 (仅在调试模式下显示)
+                  IconButton(
+                    icon: const Icon(Icons.add_alert, color: Color(0xFF666666)),
+                    onPressed: () {
+                      notificationService.sendTestContractNotification(isResign: false);
+                      Get.snackbar('测试', '已添加合同签署通知');
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 8),
+                  // 搜索按钮
+                  IconButton(
+                    icon: const Icon(Icons.search, color: Color(0xFF666666)),
+                    onPressed: () {
+                      Get.snackbar('提示', '搜索功能正在开发中...');
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -118,24 +139,24 @@ class MessagesPage extends GetView<HomeController> {
   }
   
   // 构建消息页面视图
-  Widget _buildMessagePageView() {
+  Widget _buildMessagePageView(NotificationService notificationService) {
     return PageView(
       controller: _pageController,
       onPageChanged: (index) {
         _selectedTabIndex.value = index;
       },
       children: [
-        _buildMessageList('all'), // 全部消息
-        _buildMessageList('system'), // 系统通知
-        _buildMessageList('project'), // 项目消息
+        _buildMessageList('all', notificationService), // 全部消息
+        _buildMessageList('system', notificationService), // 系统通知
+        _buildMessageList('project', notificationService), // 项目消息
       ],
     );
   }
   
   // 构建消息列表
-  Widget _buildMessageList(String filterType) {
-    // 消息数据模型
-    final List<Map<String, dynamic>> allMessages = [
+  Widget _buildMessageList(String filterType, NotificationService notificationService) {
+    // 静态消息数据模型
+    final List<Map<String, dynamic>> staticMessages = [
       {
         'type': 'system',
         'title': '账号安全提醒',
@@ -156,87 +177,140 @@ class MessagesPage extends GetView<HomeController> {
         'avatarBgColor': Colors.green[100],
         'avatarColor': Colors.green,
       },
-      {
-        'type': 'system',
-        'title': '实名认证成功',
-        'content': '您的实名认证已成功通过审核，现在可以申请更多高薪项目了。',
-        'time': '昨天',
-        'isRead': true,
-        'avatar': Icons.verified_user,
-        'avatarBgColor': Colors.blue[100],
-        'avatarColor': Colors.blue,
-      },
-      {
-        'type': 'project',
-        'title': '工资已发放',
-        'content': '您在"恒大建筑集团-木工"项目的工资已发放，请查收。',
-        'time': '3天前',
-        'isRead': true,
-        'avatar': Icons.payments,
-        'avatarBgColor': Colors.purple[100],
-        'avatarColor': Colors.purple,
-      },
-      {
-        'type': 'system',
-        'title': '新功能上线',
-        'content': '工作日报功能已上线，现在可以更方便地记录每日工作内容和工时了。',
-        'time': '4天前',
-        'isRead': true,
-        'avatar': Icons.new_releases,
-        'avatarBgColor': Colors.red[100],
-        'avatarColor': Colors.red,
-      },
-      {
-        'type': 'project',
-        'title': '项目即将开始',
-        'content': '您申请的"华润建筑-钢筋工班组"项目将于3天后开始，请做好准备。',
-        'time': '5天前',
-        'isRead': true,
-        'avatar': Icons.event,
-        'avatarBgColor': Colors.teal[100],
-        'avatarColor': Colors.teal,
-      },
-      {
-        'type': 'system',
-        'title': '证书到期提醒',
-        'content': '您的"建筑施工特种作业人员证"将于30天后到期，请及时更新。',
-        'time': '6天前',
-        'isRead': true,
-        'avatar': Icons.warning,
-        'avatarBgColor': Colors.amber[100],
-        'avatarColor': Colors.amber[700],
-      },
+      // 保留其他静态消息...
     ];
 
-    // 根据选中的标签过滤消息
-    final List<Map<String, dynamic>> filteredMessages;
-    if (filterType == 'all') {
-      filteredMessages = allMessages;
-    } else {
-      filteredMessages = allMessages.where((message) => message['type'] == filterType).toList();
-    }
+    return Obx(() {
+      // 合并静态消息和动态通知
+      final List<dynamic> allMessages = [..._convertNotificationsToMessages(notificationService.notifications), ...staticMessages];
+      
+      // 根据选中的标签过滤消息
+      final List<dynamic> filteredMessages;
+      if (filterType == 'all') {
+        filteredMessages = allMessages;
+      } else if (filterType == 'system') {
+        filteredMessages = allMessages.where((message) => 
+          message['type'] == 'system' || message['type'] == NotificationType.system || message['type'] == NotificationType.contract
+        ).toList();
+      } else {
+        filteredMessages = allMessages.where((message) => message['type'] == filterType).toList();
+      }
 
-    if (filteredMessages.isEmpty) {
-      return _buildEmptyState();
-    }
+      if (filteredMessages.isEmpty) {
+        return _buildEmptyState();
+      }
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          children: [
-            ...filteredMessages.map((message) => _buildMessageItem(message)).toList(),
-            // 底部留白
-            const SizedBox(height: 80),
-          ],
+      return SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            children: [
+              ...filteredMessages.map((message) => _buildMessageItem(message)).toList(),
+              // 底部留白
+              const SizedBox(height: 80),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
+  }
+  
+  // 将通知转换为消息格式
+  List<Map<String, dynamic>> _convertNotificationsToMessages(List<NotificationModel> notifications) {
+    return notifications.map((notification) {
+      // 根据通知类型设置不同的图标和颜色
+      IconData icon;
+      Color? bgColor;
+      Color? iconColor;
+      
+      switch (notification.type) {
+        case NotificationType.contract:
+          final isResign = notification.data != null && notification.data!['type'] == 'reSign';
+          icon = isResign ? Icons.autorenew : Icons.assignment;
+          bgColor = isResign ? Colors.teal[100] : Colors.indigo[100];
+          iconColor = isResign ? Colors.teal : Colors.indigo;
+          break;
+        case NotificationType.system:
+          icon = Icons.announcement;
+          bgColor = Colors.blue[100];
+          iconColor = Colors.blue;
+          break;
+        case NotificationType.user:
+          icon = Icons.person;
+          bgColor = Colors.purple[100];
+          iconColor = Colors.purple;
+          break;
+        case NotificationType.job:
+          icon = Icons.work;
+          bgColor = Colors.green[100];
+          iconColor = Colors.green;
+          break;
+        default:
+          icon = Icons.notifications;
+          bgColor = Colors.grey[100];
+          iconColor = Colors.grey[700];
+      }
+      
+      // 格式化时间
+      String timeStr = _formatNotificationTime(notification.timestamp);
+      
+      return {
+        'type': notification.type,
+        'title': notification.title,
+        'content': notification.content,
+        'time': timeStr,
+        'isRead': false, // 默认为未读
+        'avatar': icon,
+        'avatarBgColor': bgColor,
+        'avatarColor': iconColor,
+        'data': notification.data,
+        'isNotification': true, // 标记为来自通知服务的消息
+      };
+    }).toList();
+  }
+  
+  // 格式化通知时间
+  String _formatNotificationTime(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+    
+    if (difference.inMinutes < 1) {
+      return '刚刚';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes}分钟前';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours}小时前';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}天前';
+    } else {
+      return '${timestamp.month}-${timestamp.day}';
+    }
   }
   
   // 构建消息项
   Widget _buildMessageItem(Map<String, dynamic> message) {
+    // 处理通知特殊动作
+    void handleMessageTap() {
+      // 如果是合同通知，执行特殊处理
+      if (message['type'] == NotificationType.contract && message['data'] != null) {
+        final contractCode = message['data']['contractCode'] ?? '';
+        final contractType = message['data']['type'] ?? '';
+        final isResign = contractType == 'reSign';
+        
+        Get.snackbar(
+          isResign ? '合同续签' : '合同签订', 
+          '即将跳转到合同${isResign ? '续签' : '签署'}页面，合同编号：$contractCode',
+          duration: const Duration(seconds: 2),
+        );
+        // TODO: 跳转到合同签署页面
+        return;
+      }
+      
+      // 其他消息的默认处理
+      Get.snackbar('提示', '消息详情功能正在开发中...');
+    }
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
@@ -251,9 +325,7 @@ class MessagesPage extends GetView<HomeController> {
         ],
       ),
       child: InkWell(
-        onTap: () {
-          Get.snackbar('提示', '消息详情功能正在开发中...');
-        },
+        onTap: handleMessageTap,
         borderRadius: BorderRadius.circular(10),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -316,6 +388,30 @@ class MessagesPage extends GetView<HomeController> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    // 如果是合同通知，显示操作按钮
+                    if (message['type'] == NotificationType.contract) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          OutlinedButton(
+                            onPressed: handleMessageTap,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1976D2),
+                              minimumSize: const Size(80, 36),
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              side: const BorderSide(color: Color(0xFF1976D2)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: Text(message['data'] != null && message['data']['type'] == 'reSign' 
+                                ? '去续签' 
+                                : '去签署'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -332,10 +428,10 @@ class MessagesPage extends GetView<HomeController> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            'assets/images/empty_message.png',
-            width: 120,
-            height: 120,
+          Icon(
+            Icons.notifications_off,
+            size: 80,
+            color: Colors.grey[400],
           ),
           const SizedBox(height: 16),
           const Text(

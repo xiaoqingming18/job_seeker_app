@@ -37,29 +37,24 @@ class SocketService extends GetxService {
       // 断开可能存在的旧连接
       disconnect();
       
-      // 使用令牌作为 URL 参数建立连接
-      final socketUrl = '$_serverUrl?token=$token';
+      print('尝试连接WebSocket服务器: $_serverUrl');
+      print('使用Token: ${token.length > 10 ? "${token.substring(0, 10)}..." : token}');
       
-      print('尝试连接WebSocket: $socketUrl');
-      
-      _socket = IO.io(
-        socketUrl,
-        IO.OptionBuilder()
-            .setTransports(['websocket']) // 使用 WebSocket 传输
-            .disableAutoConnect() // 禁用自动连接
-            .enableForceNewConnection() // 强制创建新连接
-            .setTimeout(10000) // 增加超时时间到10秒
-            .setReconnectionAttempts(5) // 设置重连尝试次数
-            .setReconnectionDelay(5000) // 重连延迟5秒
-            .enableReconnection() // 启用重连
-            .build()
-      );
+      // 使用与测试网页相似的配置，但适配 socket_io_client 1.0.2 API
+      _socket = IO.io(_serverUrl, {
+        'transports': ['websocket', 'polling'], // 同时支持websocket和polling
+        'query': {'token': token}, // 通过query参数传递token
+        'autoConnect': true, // 启用自动连接
+        'forceNew': true, // 强制创建新连接
+        'timeout': 20000, // 增加超时时间到20秒
+        'reconnection': true, // 启用重连
+        'reconnectionAttempts': 5, // 设置重连尝试次数
+        'reconnectionDelay': 1000, // 重连延迟1秒
+        'reconnectionDelayMax': 5000, // 最大重连延迟5秒
+      });
 
       // 设置事件处理
       _setupEventHandlers();
-      
-      // 手动连接
-      _socket?.connect();
       
       // 打印连接状态
       print('WebSocket 连接已初始化，Socket状态: ${_socket?.connected}');
@@ -78,7 +73,6 @@ class SocketService extends GetxService {
       if (_socket!.connected) {
         _socket!.disconnect();
       }
-      _socket!.dispose();
       _socket = null;
       isConnected.value = false;
     }
@@ -86,53 +80,53 @@ class SocketService extends GetxService {
 
   /// 设置事件处理器
   void _setupEventHandlers() {
-    _socket?.onConnect((_) {
+    _socket?.on('connect', (_) {
       print('Socket.IO 连接成功，ID: ${_socket?.id}');
       isConnected.value = true;
+      
+      // 不再在这里直接订阅合同通知事件，避免重复订阅
+      // NotificationService 已经通过 on() 方法订阅了此事件
     });
 
-    _socket?.onConnecting((_) {
+    _socket?.on('connecting', (_) {
       print('Socket.IO 正在连接...');
     });
 
-    _socket?.onDisconnect((_) {
-      print('Socket.IO 断开连接, 原因: $_');
+    _socket?.on('disconnect', (_) {
+      print('Socket.IO 断开连接');
       isConnected.value = false;
     });
 
-    _socket?.onConnectError((error) {
+    _socket?.on('connect_error', (error) {
       print('Socket.IO 连接错误: $error');
-      if (kDebugMode) {
-        print('连接错误详情: ${error.runtimeType} - $error');
-      }
       isConnected.value = false;
     });
 
-    _socket?.onConnectTimeout((_) {
+    _socket?.on('connect_timeout', (_) {
       print('Socket.IO 连接超时');
       isConnected.value = false;
     });
 
-    _socket?.onError((error) {
+    _socket?.on('error', (error) {
       print('Socket.IO 错误: $error');
-      if (kDebugMode) {
-        print('错误详情: ${error.runtimeType} - $error');
-      }
     });
 
-    _socket?.onReconnect((_) {
-      print('Socket.IO 重新连接成功');
+    _socket?.on('reconnect', (attempt) {
+      print('Socket.IO 重新连接成功，尝试次数: $attempt');
+      isConnected.value = true;
+      
+      // 同样不在这里重新订阅
     });
 
-    _socket?.onReconnecting((_) {
-      print('Socket.IO 正在尝试重新连接...');
+    _socket?.on('reconnecting', (attempt) {
+      print('Socket.IO 正在尝试重新连接，尝试次数: $attempt');
     });
 
-    _socket?.onReconnectError((error) {
+    _socket?.on('reconnect_error', (error) {
       print('Socket.IO 重连错误: $error');
     });
 
-    _socket?.onReconnectFailed((_) {
+    _socket?.on('reconnect_failed', (_) {
       print('Socket.IO 重连失败，达到最大尝试次数');
     });
   }
@@ -142,7 +136,6 @@ class SocketService extends GetxService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_storageTokenKey);
-      print('获取的令牌: ${token != null ? (token.length > 10 ? "${token.substring(0, 10)}..." : token) : "null"}');
       return token;
     } catch (e) {
       print('获取令牌失败: $e');
@@ -166,11 +159,13 @@ class SocketService extends GetxService {
 
   /// 监听服务器事件
   void on(String event, Function(dynamic) callback) {
+    print('设置监听事件: $event');
     _socket?.on(event, callback);
   }
 
   /// 取消监听服务器事件
   void off(String event) {
+    print('移除监听事件: $event');
     _socket?.off(event);
   }
 
@@ -184,6 +179,17 @@ class SocketService extends GetxService {
       return isConnected.value;
     }
     return true;
+  }
+
+  /// 用于调试：打印当前已订阅的所有事件
+  void printActiveListeners() {
+    if (_socket != null) {
+      print('当前Socket.IO事件监听器:');
+      print('Socket连接状态: ${_socket!.connected ? "已连接" : "未连接"}');
+      print('Socket ID: ${_socket!.id}');
+    } else {
+      print('Socket未初始化，没有活跃的监听器');
+    }
   }
 
   @override

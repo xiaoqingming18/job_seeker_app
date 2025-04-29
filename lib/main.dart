@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/routes/app_pages.dart';
 import 'app/services/socket_service.dart';
+import 'app/services/notification_service.dart';
 
 void main() async {
   // 确保Flutter绑定初始化
@@ -11,6 +12,9 @@ void main() async {
   
   // 初始化 SocketService
   await Get.putAsync(() => SocketService().init());
+  
+  // 初始化 NotificationService
+  await Get.putAsync(() => NotificationService().init());
   
   // 打印SharedPreferences中的token信息
   await printTokenInfo();

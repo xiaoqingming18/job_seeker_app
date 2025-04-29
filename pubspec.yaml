@@ -15,7 +15,7 @@ dependencies:
   shared_preferences: ^2.2.2  # 本地存储，用于保存令牌
   json_annotation: ^4.8.1  # JSON 序列化支持
   image_picker: ^1.1.2
-  socket_io_client: ^2.0.3+1  # Socket.IO 客户端
+  socket_io_client: ^1.0.2  # 使用支持空安全且与 Socket.IO v2.x 服务器兼容的版本
 
 dev_dependencies:
   flutter_test:
