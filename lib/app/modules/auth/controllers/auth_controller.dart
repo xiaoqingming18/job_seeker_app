@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../services/api/user_api_service.dart';
 import '../../../routes/app_pages.dart';
+import '../../../services/socket_service.dart';
 
 class AuthController extends GetxController with GetSingleTickerProviderStateMixin {
   // 网络请求服务
   final UserApiService _userApiService = UserApiService();
+  // Socket.IO 服务
+  final SocketService _socketService = Get.find<SocketService>();
   
   // 登录状态
   final isLoading = false.obs;
@@ -73,7 +76,28 @@ class AuthController extends GetxController with GetSingleTickerProviderStateMix
         
         // 处理响应
         if (response.isSuccess) {
-          // 登录成功，跳转到首页
+          // 登录成功，等待短暂延迟确保token已保存
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          print('登录成功，准备连接 WebSocket...');
+          
+          // 尝试连接 WebSocket，等待连接结果
+          await _socketService.connect();
+          
+          // 给连接一些时间完成
+          await Future.delayed(const Duration(seconds: 2));
+          
+          // 检查 WebSocket 连接状态
+          if (_socketService.isConnected.value) {
+            print('WebSocket 连接成功，准备接收实时消息');
+            // 可以添加提示或初始化依赖WebSocket的功能
+          } else {
+            print('WebSocket 连接未建立，将在后台继续尝试连接');
+            // 即使WebSocket未连接，也继续前往主页
+            // 后台会通过重连机制继续尝试连接
+          }
+          
+          // 跳转到首页
           Get.offAllNamed(Routes.HOME);
         } else {
           // 显示错误消息
@@ -88,6 +112,7 @@ class AuthController extends GetxController with GetSingleTickerProviderStateMix
         }
       } catch (e) {
         // 处理异常
+        print('登录过程中出现异常: $e');
         Get.snackbar(
           '登录异常',
           '网络请求失败，请检查网络连接',
@@ -95,7 +120,8 @@ class AuthController extends GetxController with GetSingleTickerProviderStateMix
           backgroundColor: Colors.red.withOpacity(0.8),
           colorText: Colors.white,
           duration: const Duration(seconds: 3),
-        );      } finally {
+        );      
+      } finally {
         // 无论成功与否，都结束加载状态
         isLoading.value = false;
       }
