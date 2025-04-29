@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';  // 添加定时器支持
 
 /// Socket.IO 服务，管理 WebSocket 连接
 class SocketService extends GetxService {
@@ -13,6 +14,9 @@ class SocketService extends GetxService {
   IO.Socket? _socket;
   final Rx<bool> isConnected = false.obs;
 
+  // 添加心跳检测定时器
+  Timer? _heartbeatTimer;
+  
   /// 获取 Socket 实例
   IO.Socket? get socket => _socket;
 
@@ -20,7 +24,30 @@ class SocketService extends GetxService {
   Future<SocketService> init() async {
     // 首次初始化时尝试连接
     await connect();
+    
+    // 设置定期检查连接状态的定时器
+    _startHeartbeat();
+    
     return this;
+  }
+
+  /// 开始心跳检测
+  void _startHeartbeat() {
+    // 取消可能存在的旧定时器
+    _heartbeatTimer?.cancel();
+    
+    // 每30秒检查一次连接状态
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_socket == null || !_socket!.connected) {
+        print('WebSocket心跳检测：连接已断开，尝试重连...');
+        connect();
+      } else {
+        print('WebSocket心跳检测：连接正常，Socket ID: ${_socket?.id}');
+        
+        // 发送心跳消息，保持连接活跃
+        _socket?.emit('heartbeat', {'time': DateTime.now().toIso8601String()});
+      }
+    });
   }
 
   /// 连接到 WebSocket 服务器
@@ -76,6 +103,10 @@ class SocketService extends GetxService {
       _socket = null;
       isConnected.value = false;
     }
+    
+    // 同时取消心跳定时器
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
   }
 
   /// 设置事件处理器
@@ -194,6 +225,7 @@ class SocketService extends GetxService {
 
   @override
   void onClose() {
+    _heartbeatTimer?.cancel();
     disconnect();
     super.onClose();
   }

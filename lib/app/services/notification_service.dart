@@ -23,8 +23,18 @@ class NotificationService extends GetxService {
   
   /// 初始化通知服务
   Future<NotificationService> init() async {
-    // 监听 WebSocket 通知事件
+    // 初始设置通知监听
     _setupNotificationListeners();
+    
+    // 监听Socket连接状态变化
+    _socketService.isConnected.listen((connected) {
+      if (connected) {
+        // 当WebSocket连接成功时，重新设置通知监听
+        print('WebSocket连接已建立，重新设置通知监听...');
+        _setupNotificationListeners();
+      }
+    });
+    
     return this;
   }
   
@@ -40,7 +50,17 @@ class NotificationService extends GetxService {
     // 监听合同通知事件
     _socketService.on('contract_notification', _handleNotification);
     
-    print('通知监听已设置');
+    print('通知监听已设置：notification, user_notification, job_notification, contract_notification');
+    
+    // 主动尝试发送一个测试消息到WebSocket服务器
+    try {
+      _socketService.emit('subscribe_events', {
+        'events': ['contract_notification']
+      });
+      print('已发送合同通知订阅请求');
+    } catch (e) {
+      print('发送订阅请求失败: $e');
+    }
   }
   
   /// 处理接收到的通知
@@ -80,6 +100,8 @@ class NotificationService extends GetxService {
       // 可以在这里添加本地通知显示逻辑
     } catch (e) {
       print('处理通知时出错: $e');
+      print('异常详情: ${e.toString()}');
+      print('原始数据: $data');
     }
   }
   
