@@ -56,6 +56,22 @@ class NotificationModel {
   String toString() {
     return 'NotificationModel(type: $type, title: $title, content: $content, data: $data, timestamp: $timestamp)';
   }
+  
+  /// 比较两个通知是否相似（用于检查重复）
+  bool isSimilarTo(NotificationModel other) {
+    // 对于合同通知，如果类型、标题和合同代码相同，则认为是相似通知
+    if (type == NotificationType.contract && other.type == NotificationType.contract) {
+      final String? thisContractCode = data?['contractCode'];
+      final String? otherContractCode = other.data?['contractCode'];
+      
+      if (thisContractCode != null && otherContractCode != null) {
+        return thisContractCode == otherContractCode;
+      }
+    }
+    
+    // 对于其他类型的通知，可以根据需要添加更多规则
+    return false;
+  }
 }
 
 /// 通知类型枚举
@@ -92,9 +108,46 @@ class NotificationManager {
   // 获取所有通知
   List<NotificationModel> get notifications => List.unmodifiable(_notifications);
   
-  // 添加通知
+  // 添加通知，检查重复
   void addNotification(NotificationModel notification) {
+    // 优先检查是否为合同类型通知，并且是否已有相似通知
+    if (notification.type == NotificationType.contract) {
+      // 查找现有相似通知
+      int existingIndex = _findSimilarNotificationIndex(notification);
+      
+      if (existingIndex >= 0) {
+        // 如果找到了相似通知，替换它（而不是添加新的）
+        _notifications[existingIndex] = notification;
+        print('更新现有合同通知，而非添加新通知');
+        return;
+      }
+      
+      // 限制合同通知的总数，如果已经很多，则移除最旧的
+      final contractNotifications = _notifications
+          .where((n) => n.type == NotificationType.contract)
+          .toList();
+      
+      if (contractNotifications.length >= 10) {
+        // 找出最老的合同通知并移除
+        contractNotifications.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        final oldestContract = contractNotifications.first;
+        _notifications.remove(oldestContract);
+        print('达到合同通知数量上限，移除最旧的通知');
+      }
+    }
+    
+    // 添加新通知
     _notifications.add(notification);
+  }
+  
+  // 查找相似通知的索引
+  int _findSimilarNotificationIndex(NotificationModel notification) {
+    for (int i = 0; i < _notifications.length; i++) {
+      if (notification.isSimilarTo(_notifications[i])) {
+        return i;
+      }
+    }
+    return -1;
   }
   
   // 添加通知（从原始JSON数据）

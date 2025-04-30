@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../controllers/home_controller.dart';
 import '../../../../services/notification_service.dart';
 import '../../../../models/notification_model.dart';
+import '../../../../routes/app_pages.dart';
 
 class MessagesPage extends GetView<HomeController> {
   const MessagesPage({Key? key}) : super(key: key);
@@ -190,7 +191,15 @@ class MessagesPage extends GetView<HomeController> {
         filteredMessages = allMessages;
       } else if (filterType == 'system') {
         filteredMessages = allMessages.where((message) => 
-          message['type'] == 'system' || message['type'] == NotificationType.system || message['type'] == NotificationType.contract
+          message['type'] == 'system' || message['type'] == NotificationType.system
+          // 不再在系统通知中显示合同通知，除非用户明确要求
+          // 合同通知应有自己独立的类别
+        ).toList();
+      } else if (filterType == 'project') {
+        filteredMessages = allMessages.where((message) => 
+          message['type'] == 'project' || 
+          message['type'] == NotificationType.job ||
+          message['type'] == NotificationType.contract // 合同通知归类到项目消息
         ).toList();
       } else {
         filteredMessages = allMessages.where((message) => message['type'] == filterType).toList();
@@ -303,7 +312,12 @@ class MessagesPage extends GetView<HomeController> {
           '即将跳转到合同${isResign ? '续签' : '签署'}页面，合同编号：$contractCode',
           duration: const Duration(seconds: 2),
         );
-        // TODO: 跳转到合同签署页面
+        
+        // 跳转到合同签署页面
+        Get.toNamed(
+          Routes.CONTRACT_SIGN,
+          parameters: {'contractCode': contractCode},
+        );
         return;
       }
       
