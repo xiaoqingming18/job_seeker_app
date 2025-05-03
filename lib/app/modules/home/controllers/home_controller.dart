@@ -7,6 +7,7 @@ import '../../../routes/app_pages.dart';
 import '../../../services/api/http_client.dart';
 import '../../../services/api/user_api_service.dart';
 import '../../../services/api/labor_demand_api_service.dart';
+import './im_controller.dart';
 
 class HomeController extends GetxController {
   // API 服务
@@ -15,7 +16,7 @@ class HomeController extends GetxController {
   final HttpClient _httpClient = HttpClient();
   
   // 当前选中的导航索引
-  final selectedIndex = 0.obs;
+  final RxInt selectedIndex = 0.obs;
   // 页面控制器
   late PageController pageController;
   
@@ -34,8 +35,15 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    
     // 初始化页面控制器
     pageController = PageController(initialPage: selectedIndex.value);
+    
+    // 确保ImController被注册
+    if (!Get.isRegistered<ImController>()) {
+      Get.put(ImController());
+    }
+    
     // 获取缓存的用户资料
     _loadCachedUserProfile();
     // 加载劳务需求列表

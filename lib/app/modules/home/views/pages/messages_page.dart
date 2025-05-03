@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/home_controller.dart';
+import '../../controllers/im_controller.dart';
 import '../../../../services/notification_service.dart';
 import '../../../../models/notification_model.dart';
 import '../../../../routes/app_pages.dart';
@@ -17,13 +18,16 @@ class MessagesPage extends GetView<HomeController> {
     // 获取NotificationService实例
     final NotificationService notificationService = Get.find<NotificationService>();
     
+    // 获取或创建ImController实例
+    final ImController imController = Get.find<ImController>();
+    
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: Column(
         children: [
-          _buildHeader(notificationService),
+          _buildHeader(notificationService, imController),
           Expanded(
-            child: _buildMessagePageView(notificationService),
+            child: _buildMessagePageView(notificationService, imController),
           ),
         ],
       ),
@@ -31,7 +35,7 @@ class MessagesPage extends GetView<HomeController> {
   }
   
   // 构建页面头部
-  Widget _buildHeader(NotificationService notificationService) {
+  Widget _buildHeader(NotificationService notificationService, ImController imController) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       decoration: BoxDecoration(
@@ -57,18 +61,47 @@ class MessagesPage extends GetView<HomeController> {
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF333333),
                 ),
-              ),
-              Row(
+              ),              Row(
                 children: [
                   // 添加测试按钮 (仅在调试模式下显示)
-                  IconButton(
+                  PopupMenuButton(
                     icon: const Icon(Icons.add_alert, color: Color(0xFF666666)),
-                    onPressed: () {
-                      notificationService.sendTestContractNotification(isResign: false);
-                      Get.snackbar('测试', '已添加合同签署通知');
-                    },
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'contract',
+                        child: const Text('测试合同通知'),
+                        onTap: () {
+                          notificationService.sendTestContractNotification(isResign: false);
+                          Get.snackbar('测试', '已添加合同签署通知');
+                        },
+                      ),
+                      PopupMenuItem(
+                        value: 'interview_arrange',
+                        child: const Text('测试面试安排通知'),
+                        onTap: () {
+                          notificationService.sendTestInterviewNotification(subType: 'arrange');
+                          Get.snackbar('测试', '已添加面试安排通知');
+                        },
+                      ),
+                      PopupMenuItem(
+                        value: 'interview_result',
+                        child: const Text('测试面试结果通知'),
+                        onTap: () {
+                          notificationService.sendTestInterviewNotification(subType: 'result');
+                          Get.snackbar('测试', '已添加面试结果通知');
+                        },
+                      ),
+                      PopupMenuItem(
+                        value: 'refresh_im',
+                        child: const Text('刷新IM会话'),
+                        onTap: () {
+                          imController.loadConversations();
+                          Get.snackbar('刷新', '正在刷新IM会话列表');
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(width: 8),
                   // 搜索按钮
@@ -140,22 +173,22 @@ class MessagesPage extends GetView<HomeController> {
   }
   
   // 构建消息页面视图
-  Widget _buildMessagePageView(NotificationService notificationService) {
+  Widget _buildMessagePageView(NotificationService notificationService, ImController imController) {
     return PageView(
       controller: _pageController,
       onPageChanged: (index) {
         _selectedTabIndex.value = index;
       },
       children: [
-        _buildMessageList('all', notificationService), // 全部消息
-        _buildMessageList('system', notificationService), // 系统通知
-        _buildMessageList('project', notificationService), // 项目消息
+        _buildMessageList('all', notificationService, imController), // 全部消息
+        _buildMessageList('system', notificationService, imController), // 系统通知
+        _buildMessageList('project', notificationService, imController), // 项目消息
       ],
     );
   }
   
   // 构建消息列表
-  Widget _buildMessageList(String filterType, NotificationService notificationService) {
+  Widget _buildMessageList(String filterType, NotificationService notificationService, ImController imController) {
     // 静态消息数据模型
     final List<Map<String, dynamic>> staticMessages = [
       {
@@ -182,8 +215,15 @@ class MessagesPage extends GetView<HomeController> {
     ];
 
     return Obx(() {
-      // 合并静态消息和动态通知
-      final List<dynamic> allMessages = [..._convertNotificationsToMessages(notificationService.notifications), ...staticMessages];
+      // 获取IM会话列表
+      List<Map<String, dynamic>> imConversations = imController.conversations;
+      
+      // 合并静态消息、动态通知和IM会话
+      final List<dynamic> allMessages = [
+        ...imConversations,
+        ..._convertNotificationsToMessages(notificationService.notifications), 
+        ...staticMessages
+      ];
       
       // 根据选中的标签过滤消息
       final List<dynamic> filteredMessages;
@@ -199,10 +239,50 @@ class MessagesPage extends GetView<HomeController> {
         filteredMessages = allMessages.where((message) => 
           message['type'] == 'project' || 
           message['type'] == NotificationType.job ||
-          message['type'] == NotificationType.contract // 合同通知归类到项目消息
+          message['type'] == NotificationType.contract || // 合同通知归类到项目消息
+          message['type'] == NotificationType.interview || // 面试通知也归类到项目消息
+          message['type'] == 'im_conversation' // IM会话归类到项目消息
         ).toList();
       } else {
         filteredMessages = allMessages.where((message) => message['type'] == filterType).toList();
+      }
+
+      // 处理加载中状态
+      if (filterType == 'project' && imController.isLoading.value) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text('加载会话中...', style: TextStyle(color: Colors.grey[600])),
+            ],
+          ),
+        );
+      }
+
+      // 处理错误状态
+      if (filterType == 'project' && imController.errorMessage.value.isNotEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+              const SizedBox(height: 16),
+              Text(
+                imController.errorMessage.value,
+                style: TextStyle(color: Colors.red[700]),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.refresh),
+                label: const Text('重试'),
+                onPressed: () => imController.loadConversations(),
+              ),
+            ],
+          ),
+        );
       }
 
       if (filteredMessages.isEmpty) {
@@ -215,7 +295,7 @@ class MessagesPage extends GetView<HomeController> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             children: [
-              ...filteredMessages.map((message) => _buildMessageItem(message)).toList(),
+              ...filteredMessages.map((message) => _buildMessageItem(message, imController)).toList(),
               // 底部留白
               const SizedBox(height: 80),
             ],
@@ -239,6 +319,18 @@ class MessagesPage extends GetView<HomeController> {
           icon = isResign ? Icons.autorenew : Icons.assignment;
           bgColor = isResign ? Colors.teal[100] : Colors.indigo[100];
           iconColor = isResign ? Colors.teal : Colors.indigo;
+          break;
+        case NotificationType.interview:
+          final subType = notification.data != null ? notification.data!['type'] : 'arrange';
+          if (subType == 'result') {
+            icon = Icons.fact_check;
+            bgColor = Colors.amber[100];
+            iconColor = Colors.amber[800];
+          } else {
+            icon = Icons.event_available;
+            bgColor = Colors.orange[100];
+            iconColor = Colors.orange[800];
+          }
           break;
         case NotificationType.system:
           icon = Icons.announcement;
@@ -298,9 +390,18 @@ class MessagesPage extends GetView<HomeController> {
   }
   
   // 构建消息项
-  Widget _buildMessageItem(Map<String, dynamic> message) {
+  Widget _buildMessageItem(Map<String, dynamic> message, ImController imController) {
     // 处理通知特殊动作
     void handleMessageTap() {
+      // 处理IM会话点击
+      if (message['type'] == 'im_conversation') {
+        final conversationId = message['id'];
+        if (conversationId != null) {
+          imController.openConversation(conversationId);
+        }
+        return;
+      }
+      
       // 如果是合同通知，执行特殊处理
       if (message['type'] == NotificationType.contract && message['data'] != null) {
         final contractCode = message['data']['contractCode'] ?? '';
@@ -320,9 +421,85 @@ class MessagesPage extends GetView<HomeController> {
         );
         return;
       }
+        // 如果是面试通知，执行特殊处理
+      if (message['type'] == NotificationType.interview && message['data'] != null) {
+        final subType = message['data']['type'] ?? '';
+        
+        if (subType == 'arrange') {
+          final interviewDate = message['data']['interviewDate'] ?? '';
+          final location = message['data']['location'] ?? '';
+          final interviewId = message['data']['interviewId'] ?? '';
+          
+          Get.snackbar(
+            '面试详情', 
+            '面试ID: $interviewId\n面试安排于: $interviewDate\n面试地点: $location',
+            duration: const Duration(seconds: 3),
+          );
+          
+          // 这里可以跳转到面试详情页面
+          // Get.toNamed(Routes.INTERVIEW_DETAIL, parameters: {'interviewId': interviewId});
+        } else if (subType == 'result') {
+          final result = message['data']['result'] ?? '';
+          final interviewId = message['data']['interviewId'] ?? '';
+          String resultText = '未知';
+          
+          if (result == 'pass') {
+            resultText = '通过';
+          } else if (result == 'fail') {
+            resultText = '未通过';
+          } else if (result == 'pending') {
+            resultText = '待定';
+          }
+          
+          Get.snackbar(
+            '面试结果', 
+            '面试ID: $interviewId\n您的面试结果: $resultText',
+            duration: const Duration(seconds: 3),
+          );
+          
+          // 这里可以跳转到面试结果页面
+          // Get.toNamed(Routes.INTERVIEW_RESULT, parameters: {'interviewId': interviewId});
+        }
+        return;
+      }
       
       // 其他消息的默认处理
       Get.snackbar('提示', '消息详情功能正在开发中...');
+    }
+    
+    // 处理图标
+    IconData avatarIcon;
+    Color? avatarBgColor;
+    Color? avatarColor;
+    
+    if (message['type'] == 'im_conversation') {
+      // IM会话使用聊天图标
+      avatarIcon = Icons.chat;
+      avatarBgColor = Colors.teal[100];
+      avatarColor = Colors.teal;
+    } else if (message['avatar'] is IconData) {
+      // 如果是直接的IconData
+      avatarIcon = message['avatar'];
+      avatarBgColor = message['avatarBgColor'];
+      avatarColor = message['avatarColor'];
+    } else if (message['avatar'] is String && message['avatar'].toString().startsWith('Icons.')) {
+      // 如果是字符串表示的图标
+      try {
+        final iconName = message['avatar'].toString().replaceFirst('Icons.', '');
+        avatarIcon = Icons.chat; // 默认为聊天图标
+        // 解析颜色字符串
+        avatarBgColor = _parseColor(message['avatarBgColor'] ?? 'teal.100');
+        avatarColor = _parseColor(message['avatarColor'] ?? 'teal');
+      } catch (e) {
+        avatarIcon = Icons.error;
+        avatarBgColor = Colors.red[100];
+        avatarColor = Colors.red;
+      }
+    } else {
+      // 默认图标
+      avatarIcon = Icons.message;
+      avatarBgColor = Colors.blue[100];
+      avatarColor = Colors.blue;
     }
     
     return Container(
@@ -351,13 +528,13 @@ class MessagesPage extends GetView<HomeController> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: message['avatarBgColor'],
+                  color: avatarBgColor,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Icon(
-                    message['avatar'],
-                    color: message['avatarColor'],
+                    avatarIcon,
+                    color: avatarColor,
                     size: 24,
                   ),
                 ),
@@ -402,6 +579,28 @@ class MessagesPage extends GetView<HomeController> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    // 如果是IM会话，显示查看按钮
+                    if (message['type'] == 'im_conversation') ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          OutlinedButton(
+                            onPressed: handleMessageTap,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1976D2),
+                              minimumSize: const Size(80, 36),
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              side: const BorderSide(color: Color(0xFF1976D2)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: const Text('查看会话'),
+                          ),
+                        ],
+                      ),
+                    ],
                     // 如果是合同通知，显示操作按钮
                     if (message['type'] == NotificationType.contract) ...[
                       const SizedBox(height: 10),
@@ -426,6 +625,30 @@ class MessagesPage extends GetView<HomeController> {
                         ],
                       ),
                     ],
+                    // 如果是面试通知，显示操作按钮
+                    if (message['type'] == NotificationType.interview) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          OutlinedButton(
+                            onPressed: handleMessageTap,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1976D2),
+                              minimumSize: const Size(80, 36),
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              side: const BorderSide(color: Color(0xFF1976D2)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: Text(message['data'] != null && message['data']['type'] == 'result' 
+                                ? '查看结果' 
+                                : '查看详情'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -434,6 +657,67 @@ class MessagesPage extends GetView<HomeController> {
         ),
       ),
     );
+  }
+  
+  /// 解析颜色字符串
+  Color? _parseColor(String colorStr) {
+    try {
+      if (colorStr.contains('.')) {
+        final parts = colorStr.split('.');
+        final colorName = parts[0].toLowerCase();
+        final shade = int.tryParse(parts[1]) ?? 500;
+        
+        // 尝试匹配颜色名称
+        switch (colorName) {
+          case 'red': return Colors.red[shade];
+          case 'pink': return Colors.pink[shade];
+          case 'purple': return Colors.purple[shade];
+          case 'deepPurple': return Colors.deepPurple[shade];
+          case 'indigo': return Colors.indigo[shade];
+          case 'blue': return Colors.blue[shade];
+          case 'lightBlue': return Colors.lightBlue[shade];
+          case 'cyan': return Colors.cyan[shade];
+          case 'teal': return Colors.teal[shade];
+          case 'green': return Colors.green[shade];
+          case 'lightGreen': return Colors.lightGreen[shade];
+          case 'lime': return Colors.lime[shade];
+          case 'yellow': return Colors.yellow[shade];
+          case 'amber': return Colors.amber[shade];
+          case 'orange': return Colors.orange[shade];
+          case 'deepOrange': return Colors.deepOrange[shade];
+          case 'brown': return Colors.brown[shade];
+          case 'grey': return Colors.grey[shade];
+          case 'blueGrey': return Colors.blueGrey[shade];
+          default: return Colors.blue[shade];
+        }
+      } else {
+        // 单独颜色名称
+        switch (colorStr.toLowerCase()) {
+          case 'red': return Colors.red;
+          case 'pink': return Colors.pink;
+          case 'purple': return Colors.purple;
+          case 'deepPurple': return Colors.deepPurple;
+          case 'indigo': return Colors.indigo;
+          case 'blue': return Colors.blue;
+          case 'lightBlue': return Colors.lightBlue;
+          case 'cyan': return Colors.cyan;
+          case 'teal': return Colors.teal;
+          case 'green': return Colors.green;
+          case 'lightGreen': return Colors.lightGreen;
+          case 'lime': return Colors.lime;
+          case 'yellow': return Colors.yellow;
+          case 'amber': return Colors.amber;
+          case 'orange': return Colors.orange;
+          case 'deepOrange': return Colors.deepOrange;
+          case 'brown': return Colors.brown;
+          case 'grey': return Colors.grey;
+          case 'blueGrey': return Colors.blueGrey;
+          default: return Colors.blue;
+        }
+      }
+    } catch (e) {
+      return Colors.blue;
+    }
   }
   
   // 构建空状态

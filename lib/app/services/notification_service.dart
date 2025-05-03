@@ -37,8 +37,7 @@ class NotificationService extends GetxService {
     
     return this;
   }
-  
-  /// 设置通知监听
+    /// 设置通知监听
   void _setupNotificationListeners() {
     // 监听系统通知事件
     _socketService.on('notification', _handleNotification);
@@ -50,14 +49,17 @@ class NotificationService extends GetxService {
     // 监听合同通知事件
     _socketService.on('contract_notification', _handleNotification);
     
-    print('通知监听已设置：notification, user_notification, job_notification, contract_notification');
+    // 监听面试通知事件
+    _socketService.on('interview_notification', _handleNotification);
+    
+    print('通知监听已设置：notification, user_notification, job_notification, contract_notification, interview_notification');
     
     // 主动尝试发送一个测试消息到WebSocket服务器
     try {
       _socketService.emit('subscribe_events', {
-        'events': ['contract_notification']
+        'events': ['contract_notification', 'interview_notification']
       });
-      print('已发送合同通知订阅请求');
+      print('已发送合同通知和面试通知订阅请求');
     } catch (e) {
       print('发送订阅请求失败: $e');
     }
@@ -152,6 +154,43 @@ class NotificationService extends GetxService {
     _handleNotification(testNotification);
   }
   
+  /// 发送面试通知测试（用于测试）
+  void sendTestInterviewNotification({String subType = 'arrange'}) {
+    final interviewId = DateTime.now().millisecondsSinceEpoch.toString().substring(5, 11);
+    String title, content;
+    Map<String, dynamic> data;
+    
+    if (subType == 'arrange') {
+      title = '面试通知';
+      content = '您有一场面试安排于明天下午14:00，请准时参加';
+      data = {
+        'type': 'arrange',
+        'interviewId': interviewId,
+        'status': 'scheduled',
+        'interviewDate': '${DateTime.now().add(const Duration(days: 1)).toString().substring(0, 10)} 14:00',
+        'location': '中建三局总部15楼'
+      };
+    } else {
+      title = '面试结果';
+      content = '您的面试结果已出：通过';
+      data = {
+        'type': 'result',
+        'interviewId': interviewId,
+        'status': 'completed',
+        'result': 'pass'
+      };
+    }
+    
+    final testNotification = {
+      'type': NotificationType.interview,
+      'title': title,
+      'content': content,
+      'data': data
+    };
+    
+    _handleNotification(testNotification);
+  }
+
   @override
   void onClose() {
     // 取消所有通知的监听
@@ -159,6 +198,7 @@ class NotificationService extends GetxService {
     _socketService.off('user_notification');
     _socketService.off('job_notification');
     _socketService.off('contract_notification');
+    _socketService.off('interview_notification');
     super.onClose();
   }
 }

@@ -8,7 +8,7 @@ import 'dart:async';  // 添加定时器支持
 class SocketService extends GetxService {
   // localhost 在模拟器/真机上不是指向开发机器，需要使用实际IP地址
   // 对于真机测试，请使用开发机器的实际IP地址
-  static const String _serverUrl = 'http://192.168.200.60:9092'; // 使用实际IP地址替代localhost
+  static const String _serverUrl = 'http://192.168.95.201:9092'; // 使用实际IP地址替代localhost
   static const String _storageTokenKey = 'auth_token';
   
   IO.Socket? _socket;

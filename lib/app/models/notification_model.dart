@@ -56,8 +56,7 @@ class NotificationModel {
   String toString() {
     return 'NotificationModel(type: $type, title: $title, content: $content, data: $data, timestamp: $timestamp)';
   }
-  
-  /// 比较两个通知是否相似（用于检查重复）
+    /// 比较两个通知是否相似（用于检查重复）
   bool isSimilarTo(NotificationModel other) {
     // 对于合同通知，如果类型、标题和合同代码相同，则认为是相似通知
     if (type == NotificationType.contract && other.type == NotificationType.contract) {
@@ -66,6 +65,19 @@ class NotificationModel {
       
       if (thisContractCode != null && otherContractCode != null) {
         return thisContractCode == otherContractCode;
+      }
+    }
+    
+    // 对于面试通知，如果类型、子类型和面试ID相同，则认为是相似通知
+    if (type == NotificationType.interview && other.type == NotificationType.interview) {
+      final String? thisInterviewId = data?['interviewId'];
+      final String? otherInterviewId = other.data?['interviewId'];
+      final String? thisType = data?['type'];
+      final String? otherType = other.data?['type'];
+      
+      if (thisInterviewId != null && otherInterviewId != null && 
+          thisType != null && otherType != null) {
+        return thisInterviewId == otherInterviewId && thisType == otherType;
       }
     }
     

@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// HTTP 客户端封装类，处理请求、响应和错误
 class HttpClient {
-  static const String _baseUrl = 'http://192.168.200.60:8080';
+  static const String _baseUrl = 'http://192.168.95.201:8080';
   static const int _connectTimeout = 15000; // 连接超时时间（毫秒）
   static const int _receiveTimeout = 15000; // 接收超时时间（毫秒）
   static const String _storageTokenKey = 'auth_token'; // 存储 token 的键名
