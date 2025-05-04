@@ -16,6 +16,8 @@ import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
 import '../modules/contract/views/contract_sign_view.dart';
 import '../modules/contract/controllers/contract_sign_controller.dart';
+import '../modules/chat_detail/views/chat_detail_view.dart';
+import '../modules/chat_detail/bindings/chat_detail_binding.dart';
 
 part 'app_routes.dart';
 
@@ -78,6 +80,13 @@ class AppPages {
           ),
         );
       }),
+    ),
+    GetPage(
+      name: _Paths.CHAT_DETAIL,
+      page: () => const ChatDetailView(),
+      binding: ChatDetailBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
     ),
   ];
 }

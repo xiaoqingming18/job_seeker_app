@@ -391,80 +391,29 @@ class MessagesPage extends GetView<HomeController> {
   
   // 构建消息项
   Widget _buildMessageItem(Map<String, dynamic> message, ImController imController) {
-    // 处理通知特殊动作
+    // 处理消息点击事件
     void handleMessageTap() {
-      // 处理IM会话点击
       if (message['type'] == 'im_conversation') {
-        final conversationId = message['id'];
-        if (conversationId != null) {
-          imController.openConversation(conversationId);
-        }
-        return;
-      }
-      
-      // 如果是合同通知，执行特殊处理
-      if (message['type'] == NotificationType.contract && message['data'] != null) {
-        final contractCode = message['data']['contractCode'] ?? '';
-        final contractType = message['data']['type'] ?? '';
-        final isResign = contractType == 'reSign';
-        
-        Get.snackbar(
-          isResign ? '合同续签' : '合同签订', 
-          '即将跳转到合同${isResign ? '续签' : '签署'}页面，合同编号：$contractCode',
-          duration: const Duration(seconds: 2),
-        );
-        
-        // 跳转到合同签署页面
-        Get.toNamed(
-          Routes.CONTRACT_SIGN,
-          parameters: {'contractCode': contractCode},
-        );
-        return;
-      }
-        // 如果是面试通知，执行特殊处理
-      if (message['type'] == NotificationType.interview && message['data'] != null) {
-        final subType = message['data']['type'] ?? '';
-        
-        if (subType == 'arrange') {
-          final interviewDate = message['data']['interviewDate'] ?? '';
-          final location = message['data']['location'] ?? '';
-          final interviewId = message['data']['interviewId'] ?? '';
-          
-          Get.snackbar(
-            '面试详情', 
-            '面试ID: $interviewId\n面试安排于: $interviewDate\n面试地点: $location',
-            duration: const Duration(seconds: 3),
+        // 打开IM会话详情页
+        imController.openConversation(message['id']);
+      } else if (message['type'] == NotificationType.contract) {
+        // 处理合同通知，跳转到合同签署页面
+        final contractCode = message['data'] != null ? message['data']['contractCode'] : null;
+        if (contractCode != null) {
+          Get.toNamed(
+            Routes.CONTRACT_SIGN, 
+            parameters: {'contractCode': contractCode}
           );
-          
-          // 这里可以跳转到面试详情页面
-          // Get.toNamed(Routes.INTERVIEW_DETAIL, parameters: {'interviewId': interviewId});
-        } else if (subType == 'result') {
-          final result = message['data']['result'] ?? '';
-          final interviewId = message['data']['interviewId'] ?? '';
-          String resultText = '未知';
-          
-          if (result == 'pass') {
-            resultText = '通过';
-          } else if (result == 'fail') {
-            resultText = '未通过';
-          } else if (result == 'pending') {
-            resultText = '待定';
-          }
-          
-          Get.snackbar(
-            '面试结果', 
-            '面试ID: $interviewId\n您的面试结果: $resultText',
-            duration: const Duration(seconds: 3),
-          );
-          
-          // 这里可以跳转到面试结果页面
-          // Get.toNamed(Routes.INTERVIEW_RESULT, parameters: {'interviewId': interviewId});
+        } else {
+          Get.snackbar('提示', '无效的合同编号');
         }
-        return;
+      } else if (message['type'] == NotificationType.interview) {
+        // 处理面试通知
+        Get.snackbar('提示', '面试详情页面正在开发中');
+      } else {
+        // 处理其他类型的消息
+        Get.snackbar('提示', '该消息类型的详情页正在开发中');
       }
-      
-      // 其他消息的默认处理
-      Get.snackbar('提示', '消息详情功能正在开发中...');
     }
     
     // 处理图标
@@ -586,7 +535,7 @@ class MessagesPage extends GetView<HomeController> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           OutlinedButton(
-                            onPressed: handleMessageTap,
+                            onPressed: () => imController.openConversation(message['id']),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF1976D2),
                               minimumSize: const Size(80, 36),

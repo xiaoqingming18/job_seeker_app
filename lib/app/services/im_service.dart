@@ -25,6 +25,10 @@ class ImService extends GetxService {
   // 当前用户ID
   final Rx<int?> currentUserId = Rx<int?>(null);
   
+  // 新消息通知
+  final RxBool hasNewMessage = false.obs;
+  final RxInt lastUpdatedConversationId = RxInt(0);
+  
   /// 初始化即时通讯服务
   Future<ImService> init() async {
     // 初始设置消息监听
@@ -92,22 +96,43 @@ class ImService extends GetxService {
       latestMessage.value = message;
       
       // 确定会话ID - 优先使用消息中的conversationId
-      int conversationId = message.conversationId ?? _getConversationId(message);
+      int conversationId;
+      if (message.conversationId != null) {
+        conversationId = message.conversationId!;
+        print('使用消息中的conversationId: $conversationId');
+      } else {
+        conversationId = _getConversationId(message);
+        print('使用计算得到的conversationId: $conversationId');
+      }
       
       // 添加消息到对应会话
       _addMessageToConversation(conversationId, message);
       
-      // 更新会话列表
-      _updateConversation(conversationId, message);
+      // 更新会话列表中的最后一条消息内容
+      _updateConversationLastMessage(conversationId, message);
       
       // 增加未读数量
       _updateUnreadCount();
+      
+      // 通知UI有新消息
+      _notifyNewMessage(conversationId);
       
     } catch (e) {
       print('处理IM消息时出错: $e');
       print('异常详情: ${e.toString()}');
       print('原始数据: $data');
     }
+  }
+  
+  /// 通知UI有新消息
+  void _notifyNewMessage(int conversationId) {
+    // 设置最后更新的会话ID
+    lastUpdatedConversationId.value = conversationId;
+    
+    // 触发新消息通知
+    hasNewMessage.value = !hasNewMessage.value;
+    
+    print('通知UI更新会话 $conversationId 的最后一条消息');
   }
   
   /// 获取会话ID（当消息中没有指定conversationId时使用）
@@ -141,11 +166,13 @@ class ImService extends GetxService {
       
       // 按时间戳排序
       messagesByConversation[conversationId]!.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      
+      print('添加消息到会话 $conversationId: ${message.content}');
     }
   }
   
-  /// 更新会话列表
-  void _updateConversation(int conversationId, ImMessageModel message) {
+  /// 更新会话列表中的最后一条消息内容
+  void _updateConversationLastMessage(int conversationId, ImMessageModel message) {
     // 查找现有会话
     int existingIndex = conversations.indexWhere((conv) => conv.id == conversationId);
     
@@ -153,11 +180,20 @@ class ImService extends GetxService {
       // 更新现有会话
       ImConversationModel updatedConversation = conversations[existingIndex].updateWithMessage(message);
       conversations[existingIndex] = updatedConversation;
+      print('更新已有会话 $conversationId 的最后一条消息: ${message.content}');
     } else {
       // 创建新会话
-      // 尝试从消息中获取会话名称
-      String conversationName = message.sender?.username ?? "会话 $conversationId";
-      String? avatar = message.sender?.avatar;
+      // 尝试从消息中获取会话名称和头像
+      String conversationName;
+      String? avatar;
+      
+      if (message.sender != null) {
+        conversationName = message.sender!.username;
+        avatar = message.sender!.avatar;
+      } else {
+        // 如果没有发送者信息，使用默认名称
+        conversationName = "会话 $conversationId";
+      }
       
       ImConversationModel newConversation = ImConversationModel(
         id: conversationId,
@@ -170,6 +206,7 @@ class ImService extends GetxService {
       );
       
       conversations.add(newConversation);
+      print('创建新会话 $conversationId: $conversationName, 最后一条消息: ${message.content}');
     }
     
     // 按最后消息时间排序
