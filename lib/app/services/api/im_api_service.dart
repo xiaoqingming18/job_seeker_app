@@ -54,6 +54,30 @@ class ImApiService {
     }
   }
   
+  /// 获取会话成员列表
+  /// [conversationId] 会话ID
+  Future<List<Map<String, dynamic>>> getConversationMembers(int conversationId) async {
+    try {
+      final response = await _httpClient.get('/api/im/conversations/$conversationId/members');
+      
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        
+        if (responseData['code'] == 0 && responseData['message'] == 'success') {
+          return List<Map<String, dynamic>>.from(responseData['data'] ?? []);
+        } else {
+          throw Exception('获取会话成员失败: ${responseData['message']}');
+        }
+      } else {
+        throw Exception('获取会话成员请求失败，状态码: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw Exception('网络请求错误: ${e.message}');
+    } catch (e) {
+      throw Exception('获取会话成员异常: $e');
+    }
+  }
+  
   /// 获取会话消息列表
   /// [conversationId] 会话ID
   /// [page] 页码

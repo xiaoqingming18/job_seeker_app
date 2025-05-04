@@ -23,6 +23,9 @@ class ImController extends GetxController {
   // 会话列表
   final RxList<Map<String, dynamic>> conversations = <Map<String, dynamic>>[].obs;
   
+  // 会话成员映射表 - 键为会话ID，值为成员列表
+  final RxMap<int, List<Map<String, dynamic>>> conversationMembers = <int, List<Map<String, dynamic>>>{}.obs;
+  
   // 加载状态
   final RxBool isLoading = false.obs;
   
@@ -111,6 +114,9 @@ class ImController extends GetxController {
         
         // 按时间排序
         _sortConversationsByTime();
+        
+        // 获取会话成员
+        _fetchConversationMembers(serviceConversation.id);
       }
     }
   }
@@ -251,6 +257,11 @@ class ImController extends GetxController {
       // 更新ImService中的会话状态
       _updateImServiceConversations(userConversations);
       
+      // 开始获取每个会话的成员信息
+      for (final conversation in userConversations) {
+        _fetchConversationMembers(conversation['id']);
+      }
+      
       print('加载会话列表成功，共 ${conversations.length} 个会话');
       isLoading.value = false;
     } catch (e) {
@@ -258,6 +269,68 @@ class ImController extends GetxController {
       errorMessage.value = '加载会话列表失败: $e';
       isLoading.value = false;
     }
+  }
+  
+  /// 获取会话成员信息
+  Future<void> _fetchConversationMembers(int conversationId) async {
+    try {
+      print('获取会话 $conversationId 的成员信息...');
+      final List<Map<String, dynamic>> members = 
+          await _imApiService.getConversationMembers(conversationId);
+      
+      // 将会话成员保存到映射表中
+      conversationMembers[conversationId] = members;
+      
+      // 输出调试信息
+      print('会话 $conversationId 的成员信息:');
+      for (final member in members) {
+        print('  - 成员ID: ${member['userId']}, 昵称: ${member['nickname']}, 角色: ${member['role']}');
+      }
+      
+      // 组合会话和成员数据，输出到控制台
+      _printCombinedConversationData(conversationId);
+      
+    } catch (e) {
+      print('获取会话 $conversationId 的成员信息失败: $e');
+    }
+  }
+  
+  /// 打印组合后的会话数据
+  void _printCombinedConversationData(int conversationId) {
+    // 找到会话数据
+    final conversation = conversations.firstWhere(
+      (conv) => conv['id'] == conversationId,
+      orElse: () => <String, dynamic>{},
+    );
+    
+    // 如果找不到会话数据，直接返回
+    if (conversation.isEmpty) {
+      print('找不到会话 $conversationId 的数据');
+      return;
+    }
+    
+    // 获取会话成员数据
+    final members = conversationMembers[conversationId] ?? [];
+    
+    // 组合数据结构
+    final combinedData = {
+      'conversation': conversation,
+      'members': members,
+      'currentUserId': userId.value,
+    };
+    
+    // 输出组合后的数据结构
+    print('========== 会话 $conversationId 的完整数据 ==========');
+    print('会话标题: ${conversation['title']}');
+    print('最后消息: ${conversation['content']}');
+    print('时间: ${conversation['time']}');
+    print('成员数量: ${members.length}');
+    print('成员列表:');
+    for (final member in members) {
+      print('  - ID: ${member['userId']}, 昵称: ${member['nickname']}, 角色: ${member['role']}, 加入时间: ${member['joinTime']}');
+    }
+    print('当前用户ID: ${userId.value}');
+    print('===============================================');
   }
   
   /// 更新ImService中的会话状态
@@ -305,6 +378,11 @@ class ImController extends GetxController {
     } else {
       return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
     }
+  }
+  
+  /// 获取会话成员数据
+  List<Map<String, dynamic>>? getConversationMembers(int conversationId) {
+    return conversationMembers[conversationId];
   }
   
   /// 打开会话详情
