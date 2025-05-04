@@ -7,6 +7,8 @@ class ChatDetailBinding extends Bindings {
     Get.lazyPut<ChatDetailController>(
       () => ChatDetailController(
         conversationId: int.parse(Get.parameters['id'] ?? '0'),
+        targetUserId: int.parse(Get.parameters['targetUserId'] ?? '0'),
+        isGroup: (Get.parameters['isGroup'] ?? 'false').toLowerCase() == 'true',
       ),
     );
   }

@@ -387,13 +387,46 @@ class ImController extends GetxController {
   
   /// 打开会话详情
   void openConversation(int conversationId) {
-    // 标记会话为已读
-    _imService.markConversationAsRead(conversationId);
+    // 获取会话目标用户ID（对于单聊）或会话ID（对于群聊）
+    int targetUserId = 0;
+    bool isGroup = false;
     
-    // 导航到聊天详情页面
+    // 查找会话在ImService中的数据
+    int serviceIndex = _imService.conversations.indexWhere((conv) => conv.id == conversationId);
+    if (serviceIndex >= 0) {
+      isGroup = _imService.conversations[serviceIndex].isGroup;
+    }
+    
+    // 如果不是群聊，查找会话的目标用户ID
+    if (!isGroup) {
+      // 从会话成员中查找非当前用户的成员ID
+      final members = conversationMembers[conversationId] ?? [];
+      for (final member in members) {
+        int memberId = member['userId'];
+        if (memberId != userId.value) {
+          targetUserId = memberId;
+          break;
+        }
+      }
+      
+      // 如果会话成员中没有找到，使用会话ID作为目标用户ID
+      if (targetUserId == 0) {
+        // 对于一对一聊天，通常会话ID就是对方的用户ID
+        targetUserId = conversationId;
+      }
+    }
+    
+    // 打印会话信息
+    print('打开会话: ID=$conversationId, 是否群聊=$isGroup, 目标用户ID=$targetUserId');
+    
+    // 导航到聊天详情页面，传递会话ID和目标用户ID
     Get.toNamed(
       Routes.CHAT_DETAIL,
-      parameters: {'id': conversationId.toString()},
+      parameters: {
+        'id': conversationId.toString(),
+        'targetUserId': targetUserId.toString(),
+        'isGroup': isGroup.toString(),
+      },
     );
   }
 } 

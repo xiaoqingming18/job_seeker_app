@@ -3,12 +3,16 @@ import 'dart:convert';
 import 'socket_service.dart';
 import '../models/im_message_model.dart';
 import '../models/im_conversation_model.dart';
+import 'api/im_api_service.dart';
 
 /// 即时通讯服务
 /// 用于处理IM消息并提供即时通讯相关功能
 class ImService extends GetxService {
   // Socket 服务
   final SocketService _socketService = Get.find<SocketService>();
+  
+  // API 服务
+  final ImApiService _imApiService = ImApiService();
   
   // 最新消息
   final Rx<ImMessageModel?> latestMessage = Rx<ImMessageModel?>(null);
@@ -223,7 +227,13 @@ class ImService extends GetxService {
   }
   
   /// 发送消息
-  void sendMessage(int receiverId, String content, {String messageType = 'text', bool isGroup = false, int? conversationId}) {
+  Future<void> sendMessage(
+    int receiverId, 
+    String content, {
+    String messageType = 'text',
+    bool isGroup = false,
+    int? conversationId
+  }) async {
     if (currentUserId.value == null) {
       print('错误：未设置当前用户ID，无法发送消息');
       return;
@@ -232,60 +242,57 @@ class ImService extends GetxService {
     // 使用传入的conversationId或者接收者ID
     int actualConversationId = conversationId ?? receiverId;
     
-    // 创建消息对象
-    final message = {
-      'id': DateTime.now().millisecondsSinceEpoch, // 临时ID，服务器会替换
-      'conversationId': actualConversationId,
-      'senderId': currentUserId.value,
-      'messageType': messageType,
-      'content': content,
-      'sendTime': [
-        DateTime.now().year,
-        DateTime.now().month,
-        DateTime.now().day,
-        DateTime.now().hour,
-        DateTime.now().minute,
-        DateTime.now().second,
-      ],
-      'status': 'sending',
-      'isRecalled': false,
-    };
-    
-    // 发送到服务器
-    _socketService.emit('im:send', message);
-    
-    // 同时在本地处理这条消息（即发送后立即显示）
-    _handleMessage(message);
+    try {
+      // 使用新的API发送文本消息
+      final responseData = await _imApiService.sendTextMessage(
+        conversationId: actualConversationId,
+        senderId: currentUserId.value!,
+        content: content
+      );
+      
+      print('消息发送成功: $responseData');
+      
+      // 处理响应数据，创建消息对象
+      if (responseData != null) {
+        final message = ImMessageModel.fromJson(responseData);
+        
+        // 本地处理这条消息（即发送后立即显示）
+        _handleMessage(responseData);
+      }
+    } catch (e) {
+      print('发送消息失败: $e');
+      
+      // 发送失败时，仍然显示一个本地消息，但标记为发送失败状态
+      final tempMessage = {
+        'id': DateTime.now().millisecondsSinceEpoch, // 临时ID
+        'conversationId': actualConversationId,
+        'senderId': currentUserId.value,
+        'messageType': messageType,
+        'content': content,
+        'sendTime': [
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+          DateTime.now().hour,
+          DateTime.now().minute,
+          DateTime.now().second,
+        ],
+        'status': 'failed', // 标记为发送失败
+        'isRecalled': false,
+      };
+      
+      // 在本地处理这条失败的消息
+      _handleMessage(tempMessage);
+    }
   }
   
   /// 标记会话为已读
+  /// 注意：该功能已禁用，方法保留仅为兼容性考虑
   void markConversationAsRead(int conversationId) {
-    // 查找会话
-    int index = conversations.indexWhere((conv) => conv.id == conversationId);
+    // 此功能已禁用
+    print('标记已读功能已禁用: 会话ID=$conversationId');
     
-    if (index >= 0) {
-      // 更新会话未读数
-      ImConversationModel updatedConversation = conversations[index].markAsRead();
-      conversations[index] = updatedConversation;
-      
-      // 更新消息未读状态
-      if (messagesByConversation.containsKey(conversationId)) {
-        List<ImMessageModel> messages = messagesByConversation[conversationId]!;
-        List<ImMessageModel> updatedMessages = [];
-        
-        for (var message in messages) {
-          updatedMessages.add(message.copyWithRead());
-        }
-        
-        messagesByConversation[conversationId]!.value = updatedMessages;
-      }
-      
-      // 更新总未读数
-      _updateUnreadCount();
-      
-      // 通知服务器标记为已读
-      _socketService.emit('im:read', {'conversationId': conversationId});
-    }
+    // 不再执行任何标记已读的操作
   }
   
   /// 获取会话消息列表

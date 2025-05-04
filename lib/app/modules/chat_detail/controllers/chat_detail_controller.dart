@@ -3,14 +3,24 @@ import 'package:get/get.dart';
 import '../../../models/im_message_model.dart';
 import '../../../models/im_conversation_model.dart';
 import '../../../services/im_service.dart';
+import '../../../services/api/im_api_service.dart';
 
 /// 聊天详情控制器
 class ChatDetailController extends GetxController {
   // IM服务
   final ImService _imService = Get.find<ImService>();
   
+  // API服务
+  final ImApiService _imApiService = ImApiService();
+  
   // 会话ID
   final int conversationId;
+  
+  // 目标用户ID（单聊时使用）
+  final int targetUserId;
+  
+  // 是否群聊
+  final bool isGroup;
   
   // 消息控制器
   final TextEditingController messageController = TextEditingController();
@@ -32,12 +42,18 @@ class ChatDetailController extends GetxController {
   // 当前用户ID
   int? get currentUserId => _imService.currentUserId.value;
   
-  // 构造函数，需要传入会话ID
-  ChatDetailController({required this.conversationId});
+  // 构造函数，需要传入会话ID、目标用户ID和是否群聊
+  ChatDetailController({
+    required this.conversationId,
+    required this.targetUserId,
+    required this.isGroup,
+  });
   
   @override
   void onInit() {
     super.onInit();
+    print('初始化聊天页面: 会话ID=$conversationId, 目标用户ID=$targetUserId, 是否群聊=$isGroup');
+    
     // 加载会话信息
     _loadConversation();
     
@@ -49,9 +65,6 @@ class ChatDetailController extends GetxController {
     
     // 监听新消息通知
     _setupNewMessageListener();
-    
-    // 标记消息为已读
-    _markAsRead();
   }
   
   @override
@@ -78,9 +91,6 @@ class ChatDetailController extends GetxController {
         
         // 滚动到底部
         _scrollToBottom();
-        
-        // 标记为已读
-        _markAsRead();
       }
     });
   }
@@ -121,15 +131,8 @@ class ChatDetailController extends GetxController {
     }
   }
   
-  /// 标记消息为已读
-  void _markAsRead() {
-    if (conversationId > 0) {
-      _imService.markConversationAsRead(conversationId);
-    }
-  }
-  
   /// 发送消息
-  void sendMessage() {
+  Future<void> sendMessage() async {
     final messageText = messageController.text.trim();
     if (messageText.isEmpty) return;
     
@@ -141,12 +144,12 @@ class ChatDetailController extends GetxController {
     isSending.value = true;
     
     try {
-      // 发送消息
-      _imService.sendMessage(
-        conversation.value?.id ?? conversationId, 
+      // 使用ImService发送消息
+      await _imService.sendMessage(
+        isGroup ? conversationId : targetUserId, 
         messageText, 
         messageType: 'text',
-        isGroup: conversation.value?.isGroup ?? false,
+        isGroup: isGroup,
         conversationId: conversationId
       );
       

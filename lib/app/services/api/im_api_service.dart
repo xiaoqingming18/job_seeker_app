@@ -114,6 +114,43 @@ class ImApiService {
     }
   }
   
+  /// 发送文本消息
+  /// [conversationId] 会话ID
+  /// [senderId] 发送者ID
+  /// [content] 消息内容
+  Future<Map<String, dynamic>> sendTextMessage({
+    required int conversationId,
+    required int senderId,
+    required String content,
+  }) async {
+    try {
+      final response = await _httpClient.post(
+        '/api/im/messages/text',
+        data: {
+          'conversationId': conversationId,
+          'senderId': senderId,
+          'content': content,
+        },
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = response.data;
+        
+        if (responseData['code'] == 0 && responseData['message'] == 'success') {
+          return Map<String, dynamic>.from(responseData['data'] ?? {});
+        } else {
+          throw Exception('发送文本消息失败: ${responseData['message']}');
+        }
+      } else {
+        throw Exception('发送文本消息请求失败，状态码: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw Exception('网络请求错误: ${e.message}');
+    } catch (e) {
+      throw Exception('发送文本消息异常: $e');
+    }
+  }
+  
   /// 发送消息
   /// [conversationId] 会话ID
   /// [senderId] 发送者ID
