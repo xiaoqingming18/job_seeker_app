@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../models/im_message_model.dart';
 import '../../../models/im_conversation_model.dart';
 import '../../../services/im_service.dart';
@@ -12,6 +14,9 @@ class ChatDetailController extends GetxController {
   
   // API服务
   final ImApiService _imApiService = ImApiService();
+  
+  // 图片选择器
+  final ImagePicker _imagePicker = ImagePicker();
   
   // 会话ID
   final int conversationId;
@@ -35,6 +40,8 @@ class ChatDetailController extends GetxController {
   // 加载状态
   final RxBool isLoading = false.obs;
   final RxBool isSending = false.obs;
+  final RxBool isUploadingMedia = false.obs;
+  final RxDouble uploadProgress = 0.0.obs;
   
   // 是否显示发送按钮（输入框有内容时显示）
   final RxBool showSendButton = false.obs;
@@ -204,5 +211,79 @@ class ChatDetailController extends GetxController {
     }
     
     return showHeaderMap;
+  }
+  
+  /// 选择图片
+  Future<void> pickImage() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80, // 可以设置图片质量，减小文件大小
+      );
+      
+      if (pickedFile == null) return;
+      
+      // 显示上传进度
+      isUploadingMedia.value = true;
+      
+      // 发送图片消息
+      await _imService.sendMediaMessage(
+        targetUserId,
+        File(pickedFile.path),
+        'image',
+        isGroup: isGroup,
+        conversationId: conversationId,
+        onProgress: (progress) {
+          uploadProgress.value = progress;
+        }
+      );
+      
+      isUploadingMedia.value = false;
+      uploadProgress.value = 0.0;
+      
+      // 滚动到底部
+      _scrollToBottom();
+    } catch (e) {
+      isUploadingMedia.value = false;
+      print('选择图片失败: $e');
+      Get.snackbar('错误', '发送图片失败: $e');
+    }
+  }
+  
+  /// 选择视频
+  Future<void> pickVideo() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(minutes: 5), // 最大视频时长
+      );
+      
+      if (pickedFile == null) return;
+      
+      // 显示上传进度
+      isUploadingMedia.value = true;
+      
+      // 发送视频消息
+      await _imService.sendMediaMessage(
+        targetUserId,
+        File(pickedFile.path),
+        'video',
+        isGroup: isGroup,
+        conversationId: conversationId,
+        onProgress: (progress) {
+          uploadProgress.value = progress;
+        }
+      );
+      
+      isUploadingMedia.value = false;
+      uploadProgress.value = 0.0;
+      
+      // 滚动到底部
+      _scrollToBottom();
+    } catch (e) {
+      isUploadingMedia.value = false;
+      print('选择视频失败: $e');
+      Get.snackbar('错误', '发送视频失败: $e');
+    }
   }
 } 

@@ -119,16 +119,53 @@ class ImMessageModel {
 
   /// 从JSON构造
   factory ImMessageModel.fromJson(Map<String, dynamic> json) {
+    print('解析消息JSON: ${json.keys}');
+    
+    // 解析senderId，支持String和int类型
+    int parsedSenderId;
+    if (json['senderId'] is String) {
+      parsedSenderId = int.tryParse(json['senderId']) ?? 0;
+    } else {
+      parsedSenderId = json['senderId'] ?? 0;
+    }
+    
+    // 解析conversationId，支持String和int类型
+    int? parsedConversationId;
+    if (json['conversationId'] != null) {
+      if (json['conversationId'] is String) {
+        parsedConversationId = int.tryParse(json['conversationId']);
+      } else {
+        parsedConversationId = json['conversationId'];
+      }
+    }
+    
+    // 解析消息ID，支持String和int类型
+    int parsedId;
+    if (json['id'] is String) {
+      parsedId = int.tryParse(json['id']) ?? 0;
+    } else {
+      parsedId = json['id'] ?? 0;
+    }
+    
+    // 获取消息类型
+    String messageType = json['messageType'] ?? json['type'] ?? 'text';
+    
+    // 如果是媒体消息但content为空，设置默认内容
+    String content = json['content'] ?? '';
+    if (content.isEmpty && (messageType == 'image' || messageType == 'video' || messageType == 'audio')) {
+      content = messageType == 'image' ? '[图片]' : 
+               messageType == 'video' ? '[视频]' : 
+               messageType == 'audio' ? '[语音]' : '[媒体文件]';
+    }
+    
+    print('解析消息 ID=$parsedId, 类型=$messageType, mediaUrl=${json['mediaUrl']}');
+    
     return ImMessageModel(
-      id: json['id'] is String ? int.parse(json['id']) : (json['id'] ?? 0),
-      conversationId: json['conversationId'] is String 
-          ? int.parse(json['conversationId']) 
-          : json['conversationId'],
-      senderId: json['senderId'] is String 
-          ? int.parse(json['senderId']) 
-          : (json['senderId'] ?? 0),
-      messageType: json['messageType'] ?? json['type'] ?? 'text',
-      content: json['content'] ?? '',
+      id: parsedId,
+      conversationId: parsedConversationId,
+      senderId: parsedSenderId,
+      messageType: messageType,
+      content: content,
       mediaUrl: json['mediaUrl'],
       fileName: json['fileName'],
       fileSize: json['fileSize'],

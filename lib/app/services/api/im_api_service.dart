@@ -220,4 +220,44 @@ class ImApiService {
       throw Exception('标记已读异常: $e');
     }
   }
+  
+  /// 发送媒体消息
+  /// [conversationId] 会话ID
+  /// [senderId] 发送者ID
+  /// [messageType] 消息类型(image/audio/video)
+  /// [mediaUrl] 媒体文件URL
+  Future<Map<String, dynamic>> sendMediaMessage({
+    required int conversationId,
+    required int senderId,
+    required String messageType,
+    required String mediaUrl,
+  }) async {
+    try {
+      final response = await _httpClient.post(
+        '/api/im/messages/media',
+        data: {
+          'conversationId': conversationId,
+          'senderId': senderId,
+          'messageType': messageType,
+          'mediaUrl': mediaUrl,
+        },
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = response.data;
+        
+        if (responseData['code'] == 0 && responseData['message'] == 'success') {
+          return Map<String, dynamic>.from(responseData['data'] ?? {});
+        } else {
+          throw Exception('发送媒体消息失败: ${responseData['message']}');
+        }
+      } else {
+        throw Exception('发送媒体消息请求失败，状态码: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw Exception('网络请求错误: ${e.message}');
+    } catch (e) {
+      throw Exception('发送媒体消息异常: $e');
+    }
+  }
 } 

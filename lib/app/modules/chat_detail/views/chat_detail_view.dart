@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/chat_detail_controller.dart';
 import '../../../models/im_message_model.dart';
+import 'dart:io';
 
 class ChatDetailView extends GetView<ChatDetailController> {
   const ChatDetailView({Key? key}) : super(key: key);
@@ -29,14 +30,42 @@ class ChatDetailView extends GetView<ChatDetailController> {
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // 消息列表
-          Expanded(
-            child: _buildMessageList(),
+          Column(
+            children: [
+              // 消息列表
+              Expanded(
+                child: _buildMessageList(),
+              ),
+              // 底部输入框
+              _buildInputArea(),
+            ],
           ),
-          // 底部输入框
-          _buildInputArea(),
+          // 上传进度指示器
+          Obx(() => controller.isUploadingMedia.value
+              ? Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            value: controller.uploadProgress.value,
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            '上传中...${(controller.uploadProgress.value * 100).toStringAsFixed(0)}%',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink()),
         ],
       ),
     );
@@ -125,6 +154,9 @@ class ChatDetailView extends GetView<ChatDetailController> {
 
   // 构建消息气泡
   Widget _buildMessageBubble(ImMessageModel message, bool isMyMessage) {
+    // 调试日志
+    print('构建消息气泡: ID=${message.id}, 类型=${message.messageType}, 内容=${message.content}, URL=${message.mediaUrl}');
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -165,11 +197,17 @@ class ChatDetailView extends GetView<ChatDetailController> {
                     child: Column(
                       crossAxisAlignment: isMyMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                       children: [
-                        // 消息内容
-                        Text(
-                          message.content,
-                          style: const TextStyle(fontSize: 16),
-                        ),
+                        // 根据消息类型显示不同内容
+                        if (message.messageType == 'image')
+                          _buildImageMessage(message)
+                        else if (message.messageType == 'video')
+                          _buildVideoMessage(message)
+                        else
+                          // 文本消息
+                          Text(
+                            message.content,
+                            style: const TextStyle(fontSize: 16),
+                          ),
                         
                         // 时间
                         const SizedBox(height: 4),
@@ -303,27 +341,16 @@ class ChatDetailView extends GetView<ChatDetailController> {
           children: [
             _buildFunctionItem(Icons.image, '图片', () {
               Get.back();
-              // TODO: 选择图片
-            }),
-            _buildFunctionItem(Icons.camera_alt, '拍照', () {
-              Get.back();
-              // TODO: 拍照
+              controller.pickImage();
             }),
             _buildFunctionItem(Icons.videocam, '视频', () {
               Get.back();
-              // TODO: 选择视频
+              controller.pickVideo();
             }),
             _buildFunctionItem(Icons.mic, '语音', () {
               Get.back();
-              // TODO: 录制语音
-            }),
-            _buildFunctionItem(Icons.attach_file, '文件', () {
-              Get.back();
-              // TODO: 选择文件
-            }),
-            _buildFunctionItem(Icons.location_on, '位置', () {
-              Get.back();
-              // TODO: 发送位置
+              // 语音消息暂未实现
+              Get.snackbar('提示', '语音消息功能正在开发中');
             }),
           ],
         ),
@@ -409,6 +436,288 @@ class ChatDetailView extends GetView<ChatDetailController> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  // 构建图片消息
+  Widget _buildImageMessage(ImMessageModel message) {
+    print('构建图片消息，URL=${message.mediaUrl}');
+    
+    // 处理媒体URL可能的情况
+    String? imageUrl = message.mediaUrl;
+    
+    // 媒体URL为空或者长度过短（无效）时显示错误提示
+    if (imageUrl == null || imageUrl.length < 10) {
+      print('无效的图片URL: $imageUrl');
+      return Container(
+        width: 150,
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.broken_image, color: Colors.red[300], size: 32),
+            const SizedBox(height: 8),
+            const Text('图片加载失败', style: TextStyle(color: Colors.grey)),
+            if (imageUrl != null) Text(
+              imageUrl.length > 20 ? '${imageUrl.substring(0, 20)}...' : imageUrl,
+              style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // 如果是本地文件路径，转换为File对象
+    if (imageUrl.startsWith('/') || imageUrl.startsWith('file://') || 
+        (imageUrl.length > 1 && imageUrl[1] == ':')) {
+      // 本地文件
+      print('检测到本地文件路径: $imageUrl');
+      return GestureDetector(
+        onTap: () {
+          // 查看大图...
+        },
+        child: Container(
+          constraints: const BoxConstraints(
+            maxWidth: 200,
+            maxHeight: 200,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.file(
+              File(imageUrl),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                print('本地图片加载失败: $error');
+                return Container(
+                  width: 150,
+                  height: 100,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.error, color: Colors.red),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // 标准网络图片URL
+    return GestureDetector(
+      onTap: () {
+        // 点击查看大图
+        Get.dialog(
+          Dialog(
+            backgroundColor: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: InteractiveViewer(
+                    panEnabled: true,
+                    boundaryMargin: const EdgeInsets.all(20),
+                    minScale: 0.5,
+                    maxScale: 3.0,
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        print('图片加载失败: $error, URL: $imageUrl');
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          color: Colors.grey[300],
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.error, color: Colors.red[300], size: 48),
+                              const SizedBox(height: 8),
+                              const Text('图片加载失败'),
+                              const SizedBox(height: 8),
+                              Text('URL: $imageUrl', 
+                                style: const TextStyle(fontSize: 10),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: 200,
+                          height: 150,
+                          alignment: Alignment.center,
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded / 
+                                  (loadingProgress.expectedTotalBytes ?? 1)
+                                : null,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () => Get.back(),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white70,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                  child: const Text('关闭'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      child: Stack(
+        children: [
+          Container(
+            constraints: const BoxConstraints(
+              maxWidth: 200,
+              maxHeight: 200,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                width: 150,
+                height: 120,
+                errorBuilder: (context, error, stackTrace) {
+                  print('图片缩略图加载失败: $error, URL: $imageUrl');
+                  return Container(
+                    width: 150,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error, color: Colors.red, size: 28),
+                          const SizedBox(height: 4),
+                          const Text('图片加载失败', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    width: 150,
+                    height: 120,
+                    color: Colors.grey[200],
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / 
+                              (loadingProgress.expectedTotalBytes ?? 1)
+                            : null,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          // 失败状态覆盖层
+          if (message.status == 'failed')
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error, color: Colors.red, size: 24),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '发送失败',
+                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  // 构建视频消息
+  Widget _buildVideoMessage(ImMessageModel message) {
+    return GestureDetector(
+      onTap: () {
+        // 点击播放视频
+        Get.snackbar('提示', '视频播放功能正在开发中');
+      },
+      child: Container(
+        constraints: const BoxConstraints(
+          maxWidth: 200,
+        ),
+        child: Column(
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 180,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.play_circle_fill, size: 48, color: Colors.white70),
+                  ),
+                ),
+                if (message.status == 'failed')
+                  Container(
+                    width: 180,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error, color: Colors.red[300], size: 32),
+                        const SizedBox(height: 8),
+                        const Text(
+                          '发送失败',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '点击播放视频',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        ),
       ),
     );
   }

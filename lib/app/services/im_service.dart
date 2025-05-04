@@ -4,6 +4,8 @@ import 'socket_service.dart';
 import '../models/im_message_model.dart';
 import '../models/im_conversation_model.dart';
 import 'api/im_api_service.dart';
+import 'api/file_api_service.dart';
+import 'dart:io';
 
 /// 即时通讯服务
 /// 用于处理IM消息并提供即时通讯相关功能
@@ -93,8 +95,87 @@ class ImService extends GetxService {
         return;
       }
       
+      // 如果是发送媒体消息后的响应中包含嵌套的data字段，则提取内部data
+      if (messageData.containsKey('data') && messageData['data'] is Map && 
+          (messageData['data'] as Map).containsKey('messageType')) {
+        print('检测到嵌套数据结构，提取内部data');
+        messageData = Map<String, dynamic>.from(messageData['data']);
+      }
+      
+      print('原始消息数据字段: ${messageData.keys}');
+      
+      // 媒体消息处理：检查和确保关键字段存在
+      String messageType = messageData['messageType'] ?? messageData['type'] ?? 'text';
+      bool isMediaMessage = messageType == 'image' || messageType == 'video' || messageType == 'audio';
+      
+      if (isMediaMessage) {
+        print('检测到媒体消息，类型: $messageType');
+        
+        // 检查mediaUrl字段
+        if (messageData['mediaUrl'] == null || messageData['mediaUrl'].toString().isEmpty) {
+          print('警告: 媒体消息缺少mediaUrl字段');
+        } else {
+          print('媒体URL: ${messageData['mediaUrl']}');
+        }
+        
+        // 媒体消息需要content字段
+        if (messageData['content'] == null || messageData['content'].toString().isEmpty) {
+          print('媒体消息content为空，设置默认值');
+          messageData['content'] = messageType == 'image' ? '[图片]' : 
+                               messageType == 'video' ? '[视频]' : 
+                               messageType == 'audio' ? '[语音]' : '[媒体文件]';
+        }
+      }
+      
+      // 检查sendTime格式，转换为模型期望的格式
+      if (messageData['sendTime'] != null && messageData['sendTime'] is String) {
+        try {
+          // 如果是ISO格式的字符串，转换为DateTime后提取各个部分
+          final DateTime sendTime = DateTime.parse(messageData['sendTime']);
+          messageData['sendTime'] = [
+            sendTime.year,
+            sendTime.month,
+            sendTime.day,
+            sendTime.hour,
+            sendTime.minute,
+            sendTime.second,
+          ];
+          print('转换sendTime格式: ${messageData['sendTime']}');
+        } catch (e) {
+          print('转换sendTime格式失败: $e');
+        }
+      }
+      
+      // 确保会话ID和发送者ID存在
+      if (messageData['conversationId'] == null && messageData['senderId'] != null) {
+        print('警告: 消息缺少conversationId字段，使用senderId');
+        messageData['conversationId'] = messageData['senderId'];
+      }
+      
+      if (messageData['senderId'] == null && currentUserId.value != null) {
+        print('警告: 消息缺少senderId字段，使用当前用户ID');
+        messageData['senderId'] = currentUserId.value;
+      }
+      
+      // 打印处理后的关键字段
+      print('处理后的消息数据:');
+      print('- ID: ${messageData['id']}');
+      print('- 类型: ${messageData['messageType']}');
+      print('- 内容: ${messageData['content']}');
+      print('- 媒体URL: ${messageData['mediaUrl']}');
+      print('- 发送者: ${messageData['senderId']}');
+      print('- 会话ID: ${messageData['conversationId']}');
+      
       // 创建消息模型
       final message = ImMessageModel.fromJson(messageData);
+      
+      // 再次确认关键字段是否正确传递
+      print('消息模型创建成功:');
+      print('- ID: ${message.id}');
+      print('- 类型: ${message.messageType}');
+      print('- 内容: ${message.content}');
+      print('- 媒体URL: ${message.mediaUrl}');
+      print('- 是否媒体消息: ${message.isMediaMessage}');
       
       // 更新最新消息
       latestMessage.value = message;
@@ -125,6 +206,43 @@ class ImService extends GetxService {
       print('处理IM消息时出错: $e');
       print('异常详情: ${e.toString()}');
       print('原始数据: $data');
+      
+      // 尝试创建一个简单的错误消息
+      try {
+        if (data is Map && data.containsKey('messageType') && 
+            (data['messageType'] == 'image' || data['messageType'] == 'video' || data['messageType'] == 'audio')) {
+          
+          final int senderId = currentUserId.value ?? 0;
+          final String messageType = data['messageType'] as String;
+          final int? convId = data['conversationId'] is int ? data['conversationId'] : null;
+          
+          // 创建一个简单的错误消息
+          final errorMessage = ImMessageModel(
+            id: DateTime.now().millisecondsSinceEpoch,
+            conversationId: convId,
+            senderId: senderId,
+            messageType: messageType,
+            content: '[${messageType == 'image' ? '图片' : messageType == 'video' ? '视频' : '语音'}发送失败]',
+            status: 'failed',
+            mediaUrl: data['mediaUrl'],
+          );
+          
+          final errorConvId = convId ?? senderId;
+          
+          // 添加到消息列表
+          _addMessageToConversation(errorConvId, errorMessage);
+          
+          // 更新会话
+          _updateConversationLastMessage(errorConvId, errorMessage);
+          
+          // 通知UI
+          _notifyNewMessage(errorConvId);
+          
+          print('已创建错误消息作为备用: $errorMessage');
+        }
+      } catch (fallbackError) {
+        print('创建错误消息也失败了: $fallbackError');
+      }
     }
   }
   
@@ -329,6 +447,157 @@ class ImService extends GetxService {
     };
     
     _handleMessage(testMessageData);
+  }
+
+  /// 发送媒体消息（图片、视频、音频）
+  Future<void> sendMediaMessage(
+    int receiverId,
+    File mediaFile,
+    String messageType, {
+    bool isGroup = false,
+    int? conversationId,
+    Function(double progress)? onProgress
+  }) async {
+    if (currentUserId.value == null) {
+      print('错误：未设置当前用户ID，无法发送消息');
+      return;
+    }
+    
+    // 使用传入的conversationId或者接收者ID
+    int actualConversationId = conversationId ?? receiverId;
+    
+    try {
+      // 1. 首先上传媒体文件
+      final FileApiService fileApiService = FileApiService();
+      String mediaUrl;
+      
+      // 根据不同的媒体类型选择不同的上传方法
+      switch (messageType) {
+        case 'image':
+          mediaUrl = await fileApiService.uploadImage(
+            mediaFile,
+            onProgress: (sent, total) {
+              if (onProgress != null) {
+                onProgress(sent / total);
+              }
+            }
+          );
+          break;
+        case 'video':
+          mediaUrl = await fileApiService.uploadVideo(
+            mediaFile,
+            onProgress: (sent, total) {
+              if (onProgress != null) {
+                onProgress(sent / total);
+              }
+            }
+          );
+          break;
+        case 'audio':
+          mediaUrl = await fileApiService.uploadAudio(
+            mediaFile,
+            onProgress: (sent, total) {
+              if (onProgress != null) {
+                onProgress(sent / total);
+              }
+            }
+          );
+          break;
+        default:
+          throw Exception('不支持的媒体类型: $messageType');
+      }
+      
+      print('媒体文件上传成功，URL: $mediaUrl，准备发送媒体消息，会话ID: $actualConversationId');
+      
+      // 2. 上传成功后，发送媒体消息
+      final responseData = await _imApiService.sendMediaMessage(
+        conversationId: actualConversationId,
+        senderId: currentUserId.value!,
+        messageType: messageType,
+        mediaUrl: mediaUrl
+      );
+      
+      print('媒体消息发送成功，API响应数据: $responseData');
+      
+      // 检查响应数据中的mediaUrl是否正确
+      if (responseData['mediaUrl'] == null) {
+        print('警告：媒体消息响应中缺少mediaUrl字段，添加本地URL');
+        responseData['mediaUrl'] = mediaUrl;
+      }
+      
+      // 如果content为空，设置一个默认值
+      if (responseData['content'] == null) {
+        print('警告：媒体消息响应中content为空，设置默认文本描述');
+        responseData['content'] = messageType == 'image' ? '[图片]' : 
+                                  messageType == 'video' ? '[视频]' : 
+                                  messageType == 'audio' ? '[语音]' : '[媒体文件]';
+      }
+      
+      // 确保messageType字段存在
+      if (responseData['messageType'] == null) {
+        print('警告：媒体消息响应中messageType字段缺失，使用本地类型');
+        responseData['messageType'] = messageType;
+      }
+
+      // 确保senderId字段存在
+      if (responseData['senderId'] == null) {
+        print('警告：媒体消息响应中senderId字段缺失，使用当前用户ID');
+        responseData['senderId'] = currentUserId.value;
+      }
+
+      // 确保conversationId字段存在
+      if (responseData['conversationId'] == null) {
+        print('警告：媒体消息响应中conversationId字段缺失，使用实际会话ID');
+        responseData['conversationId'] = actualConversationId;
+      }
+      
+      print('处理后的响应数据字段: ${responseData.keys}');
+      print('mediaUrl: ${responseData['mediaUrl']}');
+      print('messageType: ${responseData['messageType']}');
+      print('content: ${responseData['content']}');
+      
+      // 先构建一个测试消息确认数据格式正确
+      try {
+        final testMessage = ImMessageModel.fromJson(responseData);
+        print('测试消息构建成功: 类型=${testMessage.messageType}, URL=${testMessage.mediaUrl}');
+      } catch (e) {
+        print('测试消息构建失败: $e');
+      }
+      
+      // 本地处理这条消息（即发送后立即显示）
+      _handleMessage(responseData);
+      
+      print('媒体消息已添加到消息列表中');
+    } catch (e) {
+      print('发送媒体消息失败: $e');
+      
+      // 发送失败时，仍然显示一个本地消息，但标记为发送失败状态
+      final tempMessage = {
+        'id': DateTime.now().millisecondsSinceEpoch, // 临时ID
+        'conversationId': actualConversationId,
+        'senderId': currentUserId.value,
+        'messageType': messageType,
+        'content': messageType == 'image' ? '[图片]' : 
+                   messageType == 'video' ? '[视频]' : 
+                   messageType == 'audio' ? '[语音]' : '[媒体文件]',
+        'mediaUrl': mediaFile.path, // 本地路径作为媒体URL（仅用于本地显示）
+        'sendTime': [
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+          DateTime.now().hour,
+          DateTime.now().minute,
+          DateTime.now().second,
+        ],
+        'status': 'failed', // 标记为发送失败
+        'isRecalled': false,
+      };
+      
+      print('创建失败消息: $tempMessage');
+      
+      // 在本地处理这条失败的消息
+      _handleMessage(tempMessage);
+    }
   }
 
   @override
