@@ -225,7 +225,7 @@ class MessagesPage extends GetView<HomeController> {
         ...staticMessages
       ];
       
-      // 根据选中的标签过滤消息
+        // 根据选中的标签过滤消息
       final List<dynamic> filteredMessages;
       if (filterType == 'all') {
         filteredMessages = allMessages;
@@ -305,7 +305,7 @@ class MessagesPage extends GetView<HomeController> {
     });
   }
   
-  // 将通知转换为消息格式
+    // 将通知转换为消息格式
   List<Map<String, dynamic>> _convertNotificationsToMessages(List<NotificationModel> notifications) {
     return notifications.map((notification) {
       // 根据通知类型设置不同的图标和颜色
@@ -389,7 +389,7 @@ class MessagesPage extends GetView<HomeController> {
     }
   }
   
-  // 构建消息项
+    // 构建消息项
   Widget _buildMessageItem(Map<String, dynamic> message, ImController imController) {
     // 处理消息点击事件
     void handleMessageTap() {
@@ -400,13 +400,13 @@ class MessagesPage extends GetView<HomeController> {
         // 处理合同通知，跳转到合同签署页面
         final contractCode = message['data'] != null ? message['data']['contractCode'] : null;
         if (contractCode != null) {
-          Get.toNamed(
-            Routes.CONTRACT_SIGN, 
+        Get.toNamed(
+          Routes.CONTRACT_SIGN,
             parameters: {'contractCode': contractCode}
-          );
+        );
         } else {
           Get.snackbar('提示', '无效的合同编号');
-        }
+      }
       } else if (message['type'] == NotificationType.interview) {
         // 处理面试通知
         Get.snackbar('提示', '面试详情页面正在开发中');
@@ -420,7 +420,7 @@ class MessagesPage extends GetView<HomeController> {
     IconData avatarIcon;
     Color? avatarBgColor;
     Color? avatarColor;
-    
+        
     if (message['type'] == 'im_conversation') {
       // IM会话使用聊天图标
       avatarIcon = Icons.chat;
@@ -443,7 +443,7 @@ class MessagesPage extends GetView<HomeController> {
         avatarIcon = Icons.error;
         avatarBgColor = Colors.red[100];
         avatarColor = Colors.red;
-      }
+        }
     } else {
       // 默认图标
       avatarIcon = Icons.message;
