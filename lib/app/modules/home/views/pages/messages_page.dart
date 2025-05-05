@@ -200,6 +200,7 @@ class MessagesPage extends GetView<HomeController> {
         'avatar': Icons.security,
         'avatarBgColor': Colors.orange[100],
         'avatarColor': Colors.orange,
+        'timestamp': _getStaticMessageTimestamp(hours: 2), // 2小时前
       },
       {
         'type': 'project',
@@ -210,6 +211,7 @@ class MessagesPage extends GetView<HomeController> {
         'avatar': Icons.work,
         'avatarBgColor': Colors.green[100],
         'avatarColor': Colors.green,
+        'timestamp': _getStaticMessageTimestamp(days: 1), // 1天前
       },
       // 保留其他静态消息...
     ];
@@ -225,7 +227,7 @@ class MessagesPage extends GetView<HomeController> {
         ...staticMessages
       ];
       
-        // 根据选中的标签过滤消息
+      // 根据选中的标签过滤消息
       final List<dynamic> filteredMessages;
       if (filterType == 'all') {
         filteredMessages = allMessages;
@@ -246,6 +248,12 @@ class MessagesPage extends GetView<HomeController> {
       } else {
         filteredMessages = allMessages.where((message) => message['type'] == filterType).toList();
       }
+      
+      // 确保所有消息都有时间戳
+      _ensureAllMessagesHaveTimestamp(filteredMessages);
+      
+      // 对消息按时间戳进行排序（新消息在前）
+      _sortMessagesByTime(filteredMessages);
 
       // 处理加载中状态
       if (filterType == 'project' && imController.isLoading.value) {
@@ -305,7 +313,7 @@ class MessagesPage extends GetView<HomeController> {
     });
   }
   
-    // 将通知转换为消息格式
+  // 将通知转换为消息格式
   List<Map<String, dynamic>> _convertNotificationsToMessages(List<NotificationModel> notifications) {
     return notifications.map((notification) {
       // 根据通知类型设置不同的图标和颜色
@@ -367,6 +375,7 @@ class MessagesPage extends GetView<HomeController> {
         'avatarColor': iconColor,
         'data': notification.data,
         'isNotification': true, // 标记为来自通知服务的消息
+        'timestamp': notification.timestamp.millisecondsSinceEpoch, // 添加时间戳字段
       };
     }).toList();
   }
@@ -387,6 +396,37 @@ class MessagesPage extends GetView<HomeController> {
     } else {
       return '${timestamp.month}-${timestamp.day}';
     }
+  }
+  
+  // 排序消息列表（按时间戳降序排列，最新的消息在前面）
+  void _sortMessagesByTime(List<dynamic> messages) {
+    messages.sort((a, b) {
+      // 获取a的时间戳
+      int aTimestamp;
+      if (a['timestamp'] != null) {
+        // 直接使用timestamp字段
+        aTimestamp = a['timestamp'];
+      } else if (a['type'] == 'im_conversation' && a['rawData'] != null && a['rawData']['lastTimestamp'] != null) {
+        // 从IM会话数据中获取时间戳
+        aTimestamp = a['rawData']['lastTimestamp'];
+      } else {
+        // 默认为当前时间减去一天（较旧的消息）
+        aTimestamp = DateTime.now().subtract(const Duration(days: 1)).millisecondsSinceEpoch;
+      }
+      
+      // 获取b的时间戳
+      int bTimestamp;
+      if (b['timestamp'] != null) {
+        bTimestamp = b['timestamp'];
+      } else if (b['type'] == 'im_conversation' && b['rawData'] != null && b['rawData']['lastTimestamp'] != null) {
+        bTimestamp = b['rawData']['lastTimestamp'];
+      } else {
+        bTimestamp = DateTime.now().subtract(const Duration(days: 1)).millisecondsSinceEpoch;
+      }
+      
+      // 降序排列，较新的时间戳（较大的值）排在前面
+      return bTimestamp.compareTo(aTimestamp);
+    });
   }
   
     // 构建消息项
@@ -700,5 +740,17 @@ class MessagesPage extends GetView<HomeController> {
         ],
       ),
     );
+  }
+
+  int _getStaticMessageTimestamp({int hours = 0, int days = 0}) {
+    return DateTime.now().subtract(Duration(hours: hours, days: days)).millisecondsSinceEpoch;
+  }
+
+  void _ensureAllMessagesHaveTimestamp(List<dynamic> messages) {
+    for (var message in messages) {
+      if (message['timestamp'] == null) {
+        message['timestamp'] = DateTime.now().millisecondsSinceEpoch;
+      }
+    }
   }
 }

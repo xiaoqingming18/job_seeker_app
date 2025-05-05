@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/home_controller.dart';
+import '../../../../models/occupation_model.dart';
 
 class ProjectsPage extends GetView<HomeController> {
   const ProjectsPage({Key? key}) : super(key: key);
@@ -12,7 +13,13 @@ class ProjectsPage extends GetView<HomeController> {
         children: [
           // 整体可滚动的内容区域
           RefreshIndicator(
-            onRefresh: () => controller.refreshLaborDemands(),
+            onRefresh: () async {
+              // 同时刷新劳务需求和热门工种
+              await Future.wait([
+                controller.refreshLaborDemands(),
+                controller.refreshHotOccupations(),
+              ]);
+            },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
@@ -128,17 +135,6 @@ class ProjectsPage extends GetView<HomeController> {
 
   // 特色工种推荐区域
   Widget _buildFeaturedSection() {
-    final featuredJobs = [
-      {'name': '木工', 'icon': Icons.handyman},
-      {'name': '电工', 'icon': Icons.electrical_services},
-      {'name': '钢筋工', 'icon': Icons.architecture},
-      {'name': '砌筑工', 'icon': Icons.domain},
-      {'name': '架子工', 'icon': Icons.view_column},
-      {'name': '管道工', 'icon': Icons.plumbing},
-      {'name': '焊接工', 'icon': Icons.whatshot},
-      {'name': '混凝土工', 'icon': Icons.tonality},
-    ];
-
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       color: Colors.white,
@@ -173,49 +169,171 @@ class ProjectsPage extends GetView<HomeController> {
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 90,
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              scrollDirection: Axis.horizontal,
-              itemCount: featuredJobs.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  width: 70,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.blue[50],
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          featuredJobs[index]['icon'] as IconData,
-                          color: const Color(0xFF1976D2),
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        featuredJobs[index]['name'] as String,
-                        style: const TextStyle(
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+          Obx(() {
+            // 判断是否正在加载
+            if (controller.isLoadingOccupations.value) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2.0),
                   ),
-                );
-              },
-            ),
-          ),
+                ),
+              );
+            }
+            
+            // 如果没有数据，显示备用静态数据
+            final occupations = controller.hotOccupations.isEmpty
+                ? _getBackupOccupations()
+                : controller.hotOccupations;
+            
+            return SizedBox(
+              height: 90,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                scrollDirection: Axis.horizontal,
+                itemCount: occupations.length,
+                itemBuilder: (context, index) {
+                  final occupation = occupations[index];
+                  // 检查当前工种是否被选中
+                  final isSelected = controller.selectedOccupationId.value == occupation.id;
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      // 如果已选中，则取消选择，否则选中
+                      if (isSelected) {
+                        controller.clearOccupationFilter();
+                      } else {
+                        controller.filterLaborDemandsByOccupation(
+                          occupation.id, 
+                          occupation.name
+                        );
+                      }
+                    },
+                    child: Container(
+                      width: 70,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0xFF1976D2) : Colors.blue[50],
+                              shape: BoxShape.circle,
+                              border: isSelected 
+                                ? Border.all(color: const Color(0xFF1976D2), width: 2.0)
+                                : null,
+                            ),
+                            child: occupation.icon != null && occupation.icon!.isNotEmpty
+                                ? ClipOval(
+                                    child: Image.network(
+                                      occupation.icon!,
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Center(
+                                          child: SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.0,
+                                              value: loadingProgress.expectedTotalBytes != null
+                                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      errorBuilder: (context, error, stackTrace) {
+                                        print('加载工种图标失败: $error, 工种: ${occupation.name}');
+                                        return Icon(
+                                          _getBackupIconForOccupation(occupation.name),
+                                          color: isSelected ? Colors.white : const Color(0xFF1976D2),
+                                          size: 24,
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : Icon(
+                                    _getBackupIconForOccupation(occupation.name),
+                                    color: isSelected ? Colors.white : const Color(0xFF1976D2),
+                                    size: 24,
+                                  ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            occupation.name,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? const Color(0xFF1976D2) : Colors.black87,
+                            ),
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
         ],
       ),
     );
+  }
+  
+  // 根据工种名称获取备用图标
+  IconData _getBackupIconForOccupation(String name) {
+    switch (name.toLowerCase()) {
+      case '木工':
+        return Icons.handyman;
+      case '电工':
+        return Icons.electrical_services;
+      case '钢筋工':
+        return Icons.architecture;
+      case '砌筑工':
+        return Icons.domain;
+      case '架子工':
+        return Icons.view_column;
+      case '管道工':
+        return Icons.plumbing;
+      case '焊接工':
+        return Icons.whatshot;
+      case '混凝土工':
+        return Icons.tonality;
+      default:
+        return Icons.construction;
+    }
+  }
+  
+  // 获取备用工种数据
+  List<OccupationModel> _getBackupOccupations() {
+    return [
+      {'id': 1, 'name': '木工', 'icon': null, 'categoryId': 1, 'averageDailyWage': 350.0, 'difficultyLevel': 3, 'status': 1},
+      {'id': 2, 'name': '电工', 'icon': null, 'categoryId': 1, 'averageDailyWage': 380.0, 'difficultyLevel': 4, 'status': 1},
+      {'id': 3, 'name': '钢筋工', 'icon': null, 'categoryId': 1, 'averageDailyWage': 360.0, 'difficultyLevel': 4, 'status': 1},
+      {'id': 4, 'name': '砌筑工', 'icon': null, 'categoryId': 1, 'averageDailyWage': 330.0, 'difficultyLevel': 3, 'status': 1},
+      {'id': 5, 'name': '架子工', 'icon': null, 'categoryId': 1, 'averageDailyWage': 370.0, 'difficultyLevel': 4, 'status': 1},
+      {'id': 6, 'name': '管道工', 'icon': null, 'categoryId': 1, 'averageDailyWage': 350.0, 'difficultyLevel': 3, 'status': 1},
+      {'id': 7, 'name': '焊接工', 'icon': null, 'categoryId': 1, 'averageDailyWage': 390.0, 'difficultyLevel': 5, 'status': 1},
+      {'id': 8, 'name': '混凝土工', 'icon': null, 'categoryId': 1, 'averageDailyWage': 340.0, 'difficultyLevel': 3, 'status': 1},
+    ].map((item) => OccupationModel(
+      id: item['id'] as int,
+      name: item['name'] as String,
+      categoryId: item['categoryId'] as int,
+      icon: item['icon'] as String?,
+      averageDailyWage: item['averageDailyWage'] as double,
+      difficultyLevel: item['difficultyLevel'] as int,
+      status: item['status'] as int,
+    )).toList();
   }
   
   // 构建分类过滤器
@@ -225,18 +343,29 @@ class ProjectsPage extends GetView<HomeController> {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          _buildFilterChip("全部", true),
-          _buildFilterChip("住宅项目", false),
-          _buildFilterChip("商业建筑", false),
-          _buildFilterChip("工业项目", false),
-          _buildFilterChip("市政工程", false),
+          // 使用项目类型映射表创建过滤标签
+          ...controller.projectTypeMappings.entries.map((entry) => 
+            Obx(() => _buildFilterChip(
+              entry.value, 
+              controller.selectedProjectType.value == entry.key && controller.selectedOccupationId.value == null,
+              onSelected: (selected) {
+                if (selected) {
+                  // 清除工种筛选
+                  controller.selectedOccupationId.value = null;
+                  controller.selectedOccupationName.value = '';
+                  // 应用项目类型筛选
+                  controller.filterLaborDemandsByProjectType(entry.key);
+                }
+              },
+            ))
+          ).toList(),
         ],
       ),
     );
   }
   
   // 构建过滤标签
-  Widget _buildFilterChip(String label, bool isSelected) {
+  Widget _buildFilterChip(String label, bool isSelected, {required Function(bool) onSelected}) {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       child: FilterChip(
@@ -256,10 +385,7 @@ class ProjectsPage extends GetView<HomeController> {
             color: isSelected ? const Color(0xFF1976D2) : Colors.grey[300]!,
           ),
         ),
-        onSelected: (bool selected) {
-          // 过滤功能实现
-          Get.snackbar('提示', '分类过滤功能正在开发中...');
-        },
+        onSelected: onSelected,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         visualDensity: VisualDensity.compact,
       ),
@@ -339,14 +465,95 @@ class ProjectsPage extends GetView<HomeController> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 如果有工种筛选，显示筛选标题
+            if (controller.selectedOccupationName.isNotEmpty) ...[
+              Row(
+                children: [
+                  const Icon(
+                    Icons.filter_list,
+                    color: Color(0xFF1976D2),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${controller.selectedOccupationName.value}相关需求',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1976D2),
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: controller.clearOccupationFilter,
+                    child: const Text('清除筛选', style: TextStyle(fontSize: 13)),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+            
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '共找到 ${controller.totalItems} 个需求',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        '共找到 ${controller.totalItems} 个需求',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      
+                      // 显示当前工种筛选状态
+                      if (controller.selectedOccupationName.isNotEmpty)
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.filter_alt,
+                                  color: Color(0xFF1976D2),
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 2),
+                                Expanded(
+                                  child: Text(
+                                    controller.selectedOccupationName.value,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF1976D2),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: controller.clearOccupationFilter,
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Color(0xFF1976D2),
+                                    size: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 // 可以添加排序功能

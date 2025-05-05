@@ -95,6 +95,9 @@ class LaborDemandQuery {
   final bool? accommodation;
   final bool? meals;
   final String? status;
+  final String? projectType;
+  final int? categoryId;
+  final int? occupationId;
 
   LaborDemandQuery({
     this.pageNum = 1,
@@ -109,6 +112,9 @@ class LaborDemandQuery {
     this.accommodation,
     this.meals,
     this.status,
+    this.projectType,
+    this.categoryId,
+    this.occupationId,
   });
 
   /// 从JSON映射到对象

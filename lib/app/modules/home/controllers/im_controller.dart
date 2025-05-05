@@ -81,6 +81,11 @@ class ImController extends GetxController {
         final updatedConversation = Map<String, dynamic>.from(conversations[localIndex]);
         updatedConversation['content'] = serviceConversation.lastMessage;
         updatedConversation['time'] = _formatMessageTime(DateTime.fromMillisecondsSinceEpoch(serviceConversation.lastTimestamp));
+        // 更新时间戳
+        updatedConversation['timestamp'] = serviceConversation.lastTimestamp;
+        if (updatedConversation['rawData'] != null) {
+          updatedConversation['rawData']['lastTimestamp'] = serviceConversation.lastTimestamp;
+        }
         
         // 更新本地列表
         conversations[localIndex] = updatedConversation;
@@ -100,6 +105,7 @@ class ImController extends GetxController {
           'avatar': Icons.chat.toString(),
           'avatarBgColor': 'teal.100',
           'avatarColor': 'teal',
+          'timestamp': serviceConversation.lastTimestamp, // 添加timestamp字段
           'rawData': {
             'id': serviceConversation.id,
             'title': serviceConversation.name,
@@ -251,6 +257,7 @@ class ImController extends GetxController {
           'avatarBgColor': 'teal.100', // 使用字符串表示颜色
           'avatarColor': 'teal', // 使用字符串表示颜色
           'rawData': rawData, // 保存原始数据
+          'timestamp': lastTimestamp, // 添加timestamp字段用于全局排序
         };
       }).toList();
       
