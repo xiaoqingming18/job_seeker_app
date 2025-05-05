@@ -11,6 +11,7 @@ abstract class Routes {
   static const MY_APPLICATIONS = _Paths.MY_APPLICATIONS;
   static const CONTRACT_SIGN = _Paths.CONTRACT_SIGN;
   static const CHAT_DETAIL = _Paths.CHAT_DETAIL;
+  static const LABOR_DEMAND_SEARCH = _Paths.LABOR_DEMAND_SEARCH;
 }
 
 abstract class _Paths {
@@ -24,4 +25,5 @@ abstract class _Paths {
   static const MY_APPLICATIONS = '/my-applications';
   static const CONTRACT_SIGN = '/contract-sign';
   static const CHAT_DETAIL = '/chat-detail';
+  static const LABOR_DEMAND_SEARCH = '/labor-demand-search';
 }

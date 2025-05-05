@@ -121,7 +121,8 @@ class ProjectsPage extends GetView<HomeController> {
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
               onTap: () {
-                Get.snackbar('提示', '搜索功能正在开发中...');
+                // 跳转到劳务需求搜索页面
+                Get.toNamed('/labor-demand-search');
               },
               readOnly: true, // 防止键盘弹出
             ),
@@ -206,9 +207,13 @@ class ProjectsPage extends GetView<HomeController> {
                       if (isSelected) {
                         controller.clearOccupationFilter();
                       } else {
-                        controller.filterLaborDemandsByOccupation(
-                          occupation.id, 
-                          occupation.name
+                        // 跳转到劳务需求搜索页面，带上工种参数
+                        Get.toNamed(
+                          '/labor-demand-search',
+                          parameters: {
+                            'occupationId': occupation.id.toString(),
+                            'occupationName': occupation.name,
+                          },
                         );
                       }
                     },
