@@ -31,13 +31,17 @@ class NotificationService extends GetxService {
       if (connected) {
         // 当WebSocket连接成功时，重新设置通知监听
         print('WebSocket连接已建立，重新设置通知监听...');
+        // 先移除现有的监听器，避免重复监听
+        _removeNotificationListeners();
+        // 然后重新设置监听器
         _setupNotificationListeners();
       }
     });
     
     return this;
   }
-    /// 设置通知监听
+
+  /// 设置通知监听
   void _setupNotificationListeners() {
     // 监听系统通知事件
     _socketService.on('notification', _handleNotification);
@@ -63,6 +67,16 @@ class NotificationService extends GetxService {
     } catch (e) {
       print('发送订阅请求失败: $e');
     }
+  }
+  
+  /// 移除通知监听器，避免重复监听
+  void _removeNotificationListeners() {
+    _socketService.off('notification');
+    _socketService.off('user_notification');
+    _socketService.off('job_notification');
+    _socketService.off('contract_notification');
+    _socketService.off('interview_notification');
+    print('已移除所有通知监听器');
   }
   
   /// 处理接收到的通知
@@ -194,11 +208,7 @@ class NotificationService extends GetxService {
   @override
   void onClose() {
     // 取消所有通知的监听
-    _socketService.off('notification');
-    _socketService.off('user_notification');
-    _socketService.off('job_notification');
-    _socketService.off('contract_notification');
-    _socketService.off('interview_notification');
+    _removeNotificationListeners();
     super.onClose();
   }
 }

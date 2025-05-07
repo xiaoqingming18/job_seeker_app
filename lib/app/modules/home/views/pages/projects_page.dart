@@ -509,13 +509,13 @@ class ProjectsPage extends GetView<HomeController> {
                 Expanded(
                   child: Row(
                     children: [
-                      Text(
-                        '共找到 ${controller.totalItems} 个需求',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
+                      // Text(
+                      //   '共找到 ${controller.totalItems} 个需求',
+                      //   style: const TextStyle(
+                      //     fontSize: 14,
+                      //     color: Colors.grey,
+                      //   ),
+                      // ),
                       
                       // 显示当前工种筛选状态
                       if (controller.selectedOccupationName.isNotEmpty)

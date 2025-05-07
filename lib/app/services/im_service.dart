@@ -45,6 +45,9 @@ class ImService extends GetxService {
       if (connected) {
         // 当WebSocket连接成功时，重新设置消息监听
         print('WebSocket连接已建立，重新设置IM消息监听...');
+        // 先移除现有的监听器，避免重复监听
+        _removeMessageListeners();
+        // 然后重新设置监听器
         _setupMessageListeners();
       }
     });
@@ -74,6 +77,12 @@ class ImService extends GetxService {
     } catch (e) {
       print('发送IM消息订阅请求失败: $e');
     }
+  }
+  
+  /// 移除消息监听器，避免重复监听
+  void _removeMessageListeners() {
+    _socketService.off('im:message');
+    print('已移除IM消息监听器');
   }
   
   /// 处理接收到的消息
@@ -603,7 +612,7 @@ class ImService extends GetxService {
   @override
   void onClose() {
     // 取消IM消息的监听
-    _socketService.off('im:message');
+    _removeMessageListeners();
     super.onClose();
   }
 } 
