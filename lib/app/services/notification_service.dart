@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'dart:convert';
 import '../models/notification_model.dart';
 import 'socket_service.dart';
+import '../widgets/notification_overlay.dart';
 
 /// 通知服务
 /// 用于处理系统通知并提供通知相关功能
@@ -20,6 +21,12 @@ class NotificationService extends GetxService {
   
   // Socket 服务
   final SocketService _socketService = Get.find<SocketService>();
+  
+  // 通知弹窗管理器
+  final NotificationOverlay _notificationOverlay = NotificationOverlay();
+  
+  // 是否显示通知弹窗
+  final RxBool showNotificationPopup = true.obs;
   
   /// 初始化通知服务
   Future<NotificationService> init() async {
@@ -58,7 +65,7 @@ class NotificationService extends GetxService {
     
     print('通知监听已设置：notification, user_notification, job_notification, contract_notification, interview_notification');
     
-    // 主动尝试发送一个测试消息到WebSocket服务器
+    // 主动尝试发送一个订阅消息到WebSocket服务器
     try {
       _socketService.emit('subscribe_events', {
         'events': ['contract_notification', 'interview_notification']
@@ -113,12 +120,21 @@ class NotificationService extends GetxService {
       // 增加未读数量
       unreadCount.value++;
       
-      // 可以在这里添加本地通知显示逻辑
+      // 显示通知弹窗
+      if (showNotificationPopup.value) {
+        _showNotificationPopup(notification);
+      }
     } catch (e) {
       print('处理通知时出错: $e');
       print('异常详情: ${e.toString()}');
       print('原始数据: $data');
     }
+  }
+  
+  /// 显示通知弹窗
+  void _showNotificationPopup(NotificationModel notification) {
+    // 使用通知弹窗单例显示通知
+    _notificationOverlay.show(notification);
   }
   
   /// 更新通知列表
@@ -146,6 +162,11 @@ class NotificationService extends GetxService {
   /// 获取最近通知
   List<NotificationModel> getRecentNotifications({int count = 5}) {
     return _notificationManager.getRecentNotifications(count: count);
+  }
+  
+  /// 设置是否显示通知弹窗
+  void setShowNotificationPopup(bool show) {
+    showNotificationPopup.value = show;
   }
   
   /// 发送合同通知测试（用于测试）

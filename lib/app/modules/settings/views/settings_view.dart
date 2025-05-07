@@ -129,27 +129,27 @@ class SettingsView extends GetView<SettingsController> {
           padding: EdgeInsets.only(left: 16.0, top: 16.0, bottom: 8.0),
           child: Text(
             '通知设置',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
-        Obx(() => SwitchListTile(
-          title: const Text('接收应用通知'),
-          subtitle: const Text('开启后可接收应用推送的通知'),
-          value: controller.notificationsEnabled.value,
-          activeColor: Colors.blue,
-          onChanged: controller.toggleNotifications,
-        )),
-        Obx(() => SwitchListTile(
-          title: const Text('接收招聘信息'),
-          subtitle: const Text('开启后可接收招聘相关推送'),
-          value: controller.receiveJobInfo.value,
-          activeColor: Colors.blue,
-          onChanged: controller.toggleReceiveJobInfo,
-        )),
+        ListTile(
+          leading: const Icon(Icons.notifications, color: Colors.blue),
+          title: const Text('推送通知'),
+          subtitle: const Text('接收应用推送通知'),
+          trailing: Obx(() => Switch(
+            value: controller.isPushEnabled.value,
+            onChanged: controller.togglePushNotification,
+          )),
+        ),
+        ListTile(
+          leading: const Icon(Icons.notifications_active, color: Colors.orange),
+          title: const Text('通知测试'),
+          subtitle: const Text('测试应用内通知弹窗功能'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Get.toNamed(Routes.NOTIFICATION_TEST);
+          },
+        ),
       ],
     );
   }
@@ -176,6 +176,13 @@ class SettingsView extends GetView<SettingsController> {
           value: controller.resumeVisibility.value,
           activeColor: Colors.blue,
           onChanged: controller.toggleResumeVisibility,
+        )),
+        Obx(() => SwitchListTile(
+          title: const Text('接收招聘信息'),
+          subtitle: const Text('开启后可接收招聘相关推送'),
+          value: controller.receiveJobInfo.value,
+          activeColor: Colors.blue,
+          onChanged: controller.toggleReceiveJobInfo,
         )),
         ListTile(
           leading: const Icon(Icons.privacy_tip_outlined, color: Colors.blue),
@@ -208,17 +215,18 @@ class SettingsView extends GetView<SettingsController> {
         ),
         Obx(() => SwitchListTile(
           title: const Text('深色模式'),
-          subtitle: const Text('切换应用到深色主题'),
-          value: controller.darkModeEnabled.value,
+          subtitle: const Text('开启后使用暗色主题'),
+          value: controller.themeIsDark.value,
           activeColor: Colors.blue,
           onChanged: controller.toggleDarkMode,
         )),
-        ListTile(
-          title: const Text('语言设置'),
-          subtitle: Obx(() => Text(controller.selectedLanguage.value)),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => _showLanguagePickerDialog(),
-        ),
+        Obx(() => SwitchListTile(
+          title: const Text('自动播放视频'),
+          subtitle: const Text('允许在WIFI环境下自动播放视频'),
+          value: controller.autoPlayVideo.value,
+          activeColor: Colors.blue,
+          onChanged: controller.toggleAutoPlayVideo,
+        )),
       ],
     );
   }

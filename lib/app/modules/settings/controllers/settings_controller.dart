@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 import '../../../models/token_verification_model.dart';
 import '../../../models/user_model.dart';
@@ -31,7 +32,7 @@ class SettingsController extends GetxController {
   final RxBool showConfirmPassword = false.obs;
   
   // 是否开启通知
-  final RxBool notificationsEnabled = true.obs;
+  final RxBool isPushEnabled = true.obs;
   
   // 是否开启简历可见性
   final RxBool resumeVisibility = true.obs;
@@ -40,16 +41,31 @@ class SettingsController extends GetxController {
   final RxBool receiveJobInfo = true.obs;
   
   // 深色模式
-  final RxBool darkModeEnabled = false.obs;
+  final RxBool themeIsDark = false.obs;
   
   // 语言选项
-  final RxString selectedLanguage = "中文".obs;
+  final RxString selectedLanguage = 'zh_CN'.obs;
   final List<String> languages = ["中文", "English"];
+  
+  // 是否自动播放视频
+  final RxBool autoPlayVideo = true.obs;
+  
+  // 应用版本
+  final RxString appVersion = "1.0.0".obs;
+  
   @override
   void onInit() {
     super.onInit();
+    debugPrint('SettingsController初始化');
+    
+    // 加载用户设置
     _loadUserPreferences();
-    _loadCachedUserProfile();
+    
+    // 获取应用版本
+    _getAppVersion();
+    
+    // 检查手机绑定状态
+    _checkPhoneBindingStatus();
   }
 
   @override
@@ -76,6 +92,60 @@ class SettingsController extends GetxController {
       }
     } catch (e) {
       debugPrint('加载缓存的用户资料失败: $e');
+    }
+  }
+  
+  /// 加载用户偏好设置
+  Future<void> _loadUserPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      themeIsDark.value = prefs.getBool('theme_is_dark') ?? false;
+      selectedLanguage.value = prefs.getString('selected_language') ?? 'zh_CN';
+      receiveJobInfo.value = prefs.getBool('receive_job_info') ?? true;
+      autoPlayVideo.value = prefs.getBool('auto_play_video') ?? true;
+      isPushEnabled.value = prefs.getBool('notifications_enabled') ?? true;
+      resumeVisibility.value = prefs.getBool('resume_visibility') ?? true;
+    } catch (e) {
+      debugPrint('加载用户偏好设置失败: $e');
+    }
+  }
+  
+  /// 保存用户偏好设置
+  Future<void> _saveUserPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('theme_is_dark', themeIsDark.value);
+      await prefs.setString('selected_language', selectedLanguage.value);
+      await prefs.setBool('receive_job_info', receiveJobInfo.value);
+      await prefs.setBool('auto_play_video', autoPlayVideo.value);
+      await prefs.setBool('notifications_enabled', isPushEnabled.value);
+      await prefs.setBool('resume_visibility', resumeVisibility.value);
+    } catch (e) {
+      debugPrint('保存用户偏好设置失败: $e');
+    }
+  }
+  
+  /// 获取应用版本
+  Future<void> _getAppVersion() async {
+    // 实际情况下，可以使用package_info_plus插件获取应用版本
+    // 这里使用模拟数据
+    appVersion.value = "1.0.0";
+  }
+  
+  /// 检查手机绑定状态
+  Future<void> _checkPhoneBindingStatus() async {
+    try {
+      // 实际情况下，可以从API获取用户手机绑定状态
+      // 这里使用模拟数据
+      final isBound = false; // 模拟未绑定手机
+      
+      if (isBound) {
+        phoneTitle.value = "修改手机号";
+      } else {
+        phoneTitle.value = "绑定手机号";
+      }
+    } catch (e) {
+      debugPrint('检查手机绑定状态失败: $e');
     }
   }
   
@@ -142,38 +212,19 @@ class SettingsController extends GetxController {
     }
   }
   
-  // 加载用户偏好设置
-  Future<void> _loadUserPreferences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      notificationsEnabled.value = prefs.getBool('notifications_enabled') ?? true;
-      resumeVisibility.value = prefs.getBool('resume_visibility') ?? true;
-      receiveJobInfo.value = prefs.getBool('receive_job_info') ?? true;
-      darkModeEnabled.value = prefs.getBool('dark_mode_enabled') ?? false;
-      selectedLanguage.value = prefs.getString('selected_language') ?? "中文";
-    } catch (e) {
-      debugPrint('加载用户偏好设置失败: $e');
-    }
-  }
-  
-  // 保存用户偏好设置
-  Future<void> _saveUserPreferences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('notifications_enabled', notificationsEnabled.value);
-      await prefs.setBool('resume_visibility', resumeVisibility.value);
-      await prefs.setBool('receive_job_info', receiveJobInfo.value);
-      await prefs.setBool('dark_mode_enabled', darkModeEnabled.value);
-      await prefs.setString('selected_language', selectedLanguage.value);
-    } catch (e) {
-      debugPrint('保存用户偏好设置失败: $e');
-    }
-  }
-  
   // 切换通知开关
-  void toggleNotifications(bool value) {
-    notificationsEnabled.value = value;
+  void togglePushNotification(bool value) {
+    isPushEnabled.value = value;
     _saveUserPreferences();
+    
+    // 根据需要可以在这里调用更多通知相关的逻辑
+    
+    // 显示提示
+    Get.snackbar(
+      '通知设置已更新',
+      value ? '您已开启应用推送通知' : '您已关闭应用推送通知',
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
   
   // 切换简历可见性
@@ -182,15 +233,9 @@ class SettingsController extends GetxController {
     _saveUserPreferences();
   }
   
-  // 切换招聘信息接收
-  void toggleReceiveJobInfo(bool value) {
-    receiveJobInfo.value = value;
-    _saveUserPreferences();
-  }
-  
   // 切换深色模式
   void toggleDarkMode(bool value) {
-    darkModeEnabled.value = value;
+    themeIsDark.value = value;
     _saveUserPreferences();
     // 这里可以添加实际切换应用主题的逻辑
     // TODO: 实现深色模式切换
@@ -202,6 +247,18 @@ class SettingsController extends GetxController {
     _saveUserPreferences();
     // 这里可以添加实际切换应用语言的逻辑
     // TODO: 实现语言切换
+  }
+  
+  // 切换是否接收招聘信息
+  void toggleReceiveJobInfo(bool value) {
+    receiveJobInfo.value = value;
+    _saveUserPreferences();
+  }
+  
+  // 切换是否自动播放视频
+  void toggleAutoPlayVideo(bool value) {
+    autoPlayVideo.value = value;
+    _saveUserPreferences();
   }
   
   // 修改密码
@@ -280,26 +337,47 @@ class SettingsController extends GetxController {
   
   // 退出登录
   void logout() {
-    Get.dialog(
-      AlertDialog(
+    showDialog(
+      context: Get.context!,
+      builder: (context) => AlertDialog(
         title: const Text('确认退出'),
-        content: const Text('你确定要退出登录吗？'),
+        content: const Text('您确定要退出登录吗？'),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('取消'),
           ),
           TextButton(
             onPressed: () async {
+              Navigator.of(context).pop();
+              
+              // 显示加载指示器
+              Get.dialog(
+                const Center(child: CircularProgressIndicator()),
+                barrierDismissible: false,
+              );
+              
               try {
+                // 调用退出登录API
                 await _userApiService.logout();
-                Get.offAllNamed(Routes.AUTH); // 退出登录后跳转到登录页
-              } catch (e) {
-                debugPrint('退出登录失败: $e');
+                
+                // 清除本地Token
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('auth_token');
+                
+                // 关闭加载指示器
                 Get.back();
+                
+                // 跳转到登录页
+                Get.offAllNamed(Routes.AUTH);
+              } catch (e) {
+                // 关闭加载指示器
+                Get.back();
+                
+                // 显示错误提示
                 Get.snackbar(
-                  '错误',
-                  '退出登录失败: $e',
+                  '退出失败',
+                  '请稍后重试',
                   snackPosition: SnackPosition.BOTTOM,
                 );
               }

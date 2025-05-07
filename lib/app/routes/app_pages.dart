@@ -20,6 +20,7 @@ import '../modules/chat_detail/views/chat_detail_view.dart';
 import '../modules/chat_detail/bindings/chat_detail_binding.dart';
 import '../modules/labor_demand_search/views/labor_demand_search_view.dart';
 import '../modules/labor_demand_search/bindings/labor_demand_search_binding.dart';
+import '../modules/test/views/notification_test_view.dart';
 
 part 'app_routes.dart';
 
@@ -94,6 +95,12 @@ class AppPages {
       name: _Paths.LABOR_DEMAND_SEARCH,
       page: () => const LaborDemandSearchView(),
       binding: LaborDemandSearchBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.NOTIFICATION_TEST,
+      page: () => const NotificationTestView(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 250),
     ),
