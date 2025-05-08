@@ -65,7 +65,13 @@ class UserApiService {
         await _httpClient.saveToken(apiResponse.data!.token);
         
         // 登录成功后，获取并缓存求职者资料
-        await fetchAndCacheJobseekerProfile();
+        final profileResponse = await fetchAndCacheJobseekerProfile();
+        
+        // 如果成功获取到用户资料，保存用户ID
+        if (profileResponse.isSuccess && profileResponse.data != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('user_id', profileResponse.data!.userId ?? 0);
+        }
       }
       
       return apiResponse;
@@ -278,10 +284,21 @@ class UserApiService {
     try {
       final response = await _httpClient.get('/user/verify-token');
       
-      return ApiResponse<TokenVerificationResponse>.fromJson(
+      final apiResponse = ApiResponse<TokenVerificationResponse>.fromJson(
         response.data,
         (data) => TokenVerificationResponse.fromJson(data),
       );
+      
+      // 如果验证成功，保存用户ID
+      if (apiResponse.isSuccess && apiResponse.data != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('user_id', apiResponse.data!.userId);
+        
+        // 由于验证成功，尝试获取并缓存最新的用户资料
+        fetchAndCacheJobseekerProfile();
+      }
+      
+      return apiResponse;
     } catch (e) {
       // 处理错误
       return ApiResponse<TokenVerificationResponse>(
@@ -302,18 +319,31 @@ class UserApiService {
       
       // 如果获取资料成功，缓存到本地存储
       if (apiResponse.isSuccess && apiResponse.data != null) {
+        // 缓存用户资料
         await _cacheJobseekerProfile(apiResponse.data!);
+        
+        // 同时保存用户ID到单独的键
+        if (apiResponse.data!.userId != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('user_id', apiResponse.data!.userId!);
+          print('已保存用户ID: ${apiResponse.data!.userId}');
+        } else {
+          print('警告: 获取到的用户资料中没有userId字段');
+        }
       }
       
       return apiResponse;
     } catch (e) {
       // 处理错误
+      print('获取个人资料失败: ${e is DioException ? e.message : e.toString()}');
       return ApiResponse<UserModel>(
         code: 500,
         message: '获取个人资料失败: ${e is DioException ? e.message : e.toString()}',
       );
     }
-  }  /// 从缓存中获取求职者资料
+  }
+
+  /// 从缓存中获取求职者资料
   Future<UserModel?> getCachedJobseekerProfile() async {
     try {
       final prefs = await SharedPreferences.getInstance();

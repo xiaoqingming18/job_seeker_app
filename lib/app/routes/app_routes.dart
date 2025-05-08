@@ -13,6 +13,7 @@ abstract class Routes {
   static const CHAT_DETAIL = _Paths.CHAT_DETAIL;
   static const LABOR_DEMAND_SEARCH = _Paths.LABOR_DEMAND_SEARCH;
   static const NOTIFICATION_TEST = _Paths.NOTIFICATION_TEST;
+  static const ATTENDANCE = _Paths.ATTENDANCE;
 }
 
 abstract class _Paths {
@@ -28,4 +29,5 @@ abstract class _Paths {
   static const CHAT_DETAIL = '/chat-detail';
   static const LABOR_DEMAND_SEARCH = '/labor-demand-search';
   static const NOTIFICATION_TEST = '/notification-test';
+  static const ATTENDANCE = '/attendance';
 }

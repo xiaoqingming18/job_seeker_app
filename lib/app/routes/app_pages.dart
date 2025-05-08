@@ -21,6 +21,8 @@ import '../modules/chat_detail/bindings/chat_detail_binding.dart';
 import '../modules/labor_demand_search/views/labor_demand_search_view.dart';
 import '../modules/labor_demand_search/bindings/labor_demand_search_binding.dart';
 import '../modules/test/views/notification_test_view.dart';
+import '../modules/attendance/views/attendance_view.dart';
+import '../modules/attendance/bindings/attendance_binding.dart';
 
 part 'app_routes.dart';
 
@@ -101,6 +103,13 @@ class AppPages {
     GetPage(
       name: _Paths.NOTIFICATION_TEST,
       page: () => const NotificationTestView(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.ATTENDANCE,
+      page: () => const AttendanceView(),
+      binding: AttendanceBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 250),
     ),

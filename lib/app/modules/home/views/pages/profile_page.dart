@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:job_seeker_app/app/routes/app_pages.dart';
 import '../../../../models/user_model.dart';
-import '../../../../routes/app_pages.dart';
 import '../../controllers/home_controller.dart';
 
 class ProfilePage extends GetView<HomeController> {
@@ -393,7 +393,7 @@ class ProfilePage extends GetView<HomeController> {
                                   // 功能卡片4：考勤记录
                                   GestureDetector(
                                     onTap: () {
-                                      Get.snackbar('提示', '考勤记录功能正在开发中...');
+                                      Get.toNamed(Routes.ATTENDANCE);
                                     },
                                     child: Column(
                                       children: const [
