@@ -70,15 +70,15 @@ class AttendanceController extends GetxController with StateMixin<List<Attendanc
     _getUserId().then((_) {
       // 加载用户参与的项目列表
       loadUserProjects();
-      
-      // 加载考勤记录
-      loadAttendanceRecords();
-      
-      // 加载考勤统计
-      loadAttendanceStatistics();
-      
-      // 检查今日是否已签到/签退
-      checkTodayAttendanceStatus();
+    
+    // 加载考勤记录
+    loadAttendanceRecords();
+    
+    // 加载考勤统计
+    loadAttendanceStatistics();
+    
+    // 检查今日是否已签到/签退
+    checkTodayAttendanceStatus();
     });
   }
   
