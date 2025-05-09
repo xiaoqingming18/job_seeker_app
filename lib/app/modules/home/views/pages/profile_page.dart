@@ -336,6 +336,7 @@ class ProfilePage extends GetView<HomeController> {
                                 ),
                               ),
                               const SizedBox(height: 16),
+                              // 第一行功能
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 children: [
@@ -405,6 +406,33 @@ class ProfilePage extends GetView<HomeController> {
                                         SizedBox(height: 8),
                                         Text('考勤记录'),
                                       ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              // 第二行功能
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  // 功能卡片5：请假管理
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.toNamed(Routes.LEAVE);
+                                    },
+                                    child: Container(
+                                      width: 70,
+                                      child: Column(
+                                        children: const [
+                                          Icon(
+                                            Icons.event_busy,
+                                            color: Colors.purple,
+                                            size: 32,
+                                          ),
+                                          SizedBox(height: 8),
+                                          Text('请假管理'),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],

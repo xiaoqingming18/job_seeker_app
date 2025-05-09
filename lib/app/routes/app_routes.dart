@@ -14,6 +14,7 @@ abstract class Routes {
   static const LABOR_DEMAND_SEARCH = _Paths.LABOR_DEMAND_SEARCH;
   static const NOTIFICATION_TEST = _Paths.NOTIFICATION_TEST;
   static const ATTENDANCE = _Paths.ATTENDANCE;
+  static const LEAVE = _Paths.LEAVE;
 }
 
 abstract class _Paths {
@@ -30,4 +31,5 @@ abstract class _Paths {
   static const LABOR_DEMAND_SEARCH = '/labor-demand-search';
   static const NOTIFICATION_TEST = '/notification-test';
   static const ATTENDANCE = '/attendance';
+  static const LEAVE = '/leave';
 }

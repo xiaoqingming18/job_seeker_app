@@ -96,6 +96,7 @@ class HttpClient {
     ProgressCallback? onReceiveProgress,
   }) async {
     try {
+      print('HTTP请求: GET $path - 参数: $queryParameters');
       final Response response = await _dio.get(
         path,
         queryParameters: queryParameters,
@@ -103,8 +104,14 @@ class HttpClient {
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
+      print('HTTP响应: GET $path - 状态码: ${response.statusCode}');
       return response;
+    } on DioException catch (e) {
+      print('HTTP错误: GET $path - DioException: ${e.message}, 状态码: ${e.response?.statusCode}');
+      print('HTTP错误详情: ${e.response?.data}');
+      rethrow;
     } catch (e) {
+      print('HTTP错误: GET $path - 其他异常: $e');
       rethrow;
     }
   }

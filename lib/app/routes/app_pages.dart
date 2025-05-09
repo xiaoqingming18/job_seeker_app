@@ -23,6 +23,8 @@ import '../modules/labor_demand_search/bindings/labor_demand_search_binding.dart
 import '../modules/test/views/notification_test_view.dart';
 import '../modules/attendance/views/attendance_view.dart';
 import '../modules/attendance/bindings/attendance_binding.dart';
+import '../modules/leave/views/leave_view.dart';
+import '../modules/leave/bindings/leave_binding.dart';
 
 part 'app_routes.dart';
 
@@ -110,6 +112,13 @@ class AppPages {
       name: _Paths.ATTENDANCE,
       page: () => const AttendanceView(),
       binding: AttendanceBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.LEAVE,
+      page: () => const LeaveView(),
+      binding: LeaveBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 250),
     ),
