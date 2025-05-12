@@ -25,6 +25,14 @@ import '../modules/attendance/views/attendance_view.dart';
 import '../modules/attendance/bindings/attendance_binding.dart';
 import '../modules/leave/views/leave_view.dart';
 import '../modules/leave/bindings/leave_binding.dart';
+import '../modules/performance/views/performance_view.dart';
+import '../modules/performance/views/performance_detail_view.dart';
+import '../modules/performance/bindings/performance_binding.dart';
+import '../modules/performance/bindings/performance_detail_binding.dart';
+import '../modules/salary/views/salary_view.dart';
+import '../modules/salary/views/salary_detail_view.dart';
+import '../modules/salary/bindings/salary_binding.dart';
+import '../modules/salary/bindings/salary_detail_binding.dart';
 
 part 'app_routes.dart';
 
@@ -119,6 +127,34 @@ class AppPages {
       name: _Paths.LEAVE,
       page: () => const LeaveView(),
       binding: LeaveBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.PERFORMANCE,
+      page: () => const PerformanceView(),
+      binding: PerformanceBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.PERFORMANCE_DETAIL,
+      page: () => const PerformanceDetailView(),
+      binding: PerformanceDetailBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.SALARY,
+      page: () => const SalaryView(),
+      binding: SalaryBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.SALARY_DETAIL,
+      page: () => const SalaryDetailView(),
+      binding: SalaryDetailBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 250),
     ),

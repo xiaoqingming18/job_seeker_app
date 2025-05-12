@@ -360,7 +360,7 @@ class ProfilePage extends GetView<HomeController> {
                                   // 功能卡片2：工资查询
                                   GestureDetector(
                                     onTap: () {
-                                      Get.snackbar('提示', '工资查询功能正在开发中...');
+                                      Get.toNamed(Routes.SALARY);
                                     },
                                     child: Column(
                                       children: const [
@@ -431,6 +431,26 @@ class ProfilePage extends GetView<HomeController> {
                                           ),
                                           SizedBox(height: 8),
                                           Text('请假管理'),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  // 功能卡片6：绩效评估
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.toNamed(Routes.PERFORMANCE);
+                                    },
+                                    child: Container(
+                                      width: 70,
+                                      child: Column(
+                                        children: const [
+                                          Icon(
+                                            Icons.assessment,
+                                            color: Colors.amber,
+                                            size: 32,
+                                          ),
+                                          SizedBox(height: 8),
+                                          Text('绩效评估'),
                                         ],
                                       ),
                                     ),

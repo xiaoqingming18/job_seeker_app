@@ -15,6 +15,10 @@ abstract class Routes {
   static const NOTIFICATION_TEST = _Paths.NOTIFICATION_TEST;
   static const ATTENDANCE = _Paths.ATTENDANCE;
   static const LEAVE = _Paths.LEAVE;
+  static const PERFORMANCE = _Paths.PERFORMANCE;
+  static const PERFORMANCE_DETAIL = _Paths.PERFORMANCE_DETAIL;
+  static const SALARY = _Paths.SALARY;
+  static const SALARY_DETAIL = _Paths.SALARY_DETAIL;
 }
 
 abstract class _Paths {
@@ -32,4 +36,8 @@ abstract class _Paths {
   static const NOTIFICATION_TEST = '/notification-test';
   static const ATTENDANCE = '/attendance';
   static const LEAVE = '/leave';
+  static const PERFORMANCE = '/performance';
+  static const PERFORMANCE_DETAIL = '/performance-detail';
+  static const SALARY = '/salary';
+  static const SALARY_DETAIL = '/salary-detail';
 }

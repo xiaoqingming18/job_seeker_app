@@ -1,7 +1,10 @@
 /// 用户模型
 class UserModel {
-  /// 用户ID
+  /// 用户ID (可能来自userId或id字段)
   final int? userId;
+  
+  /// 直接来自服务器的ID字段
+  final int? id;
   
   /// 用户名
   final String? username;
@@ -54,6 +57,7 @@ class UserModel {
   /// 构造函数
   UserModel({
     this.userId,
+    this.id,
     this.username,
     this.mobile,
     this.email,
@@ -74,8 +78,13 @@ class UserModel {
 
   /// 从 JSON 对象创建 UserModel 实例
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // 优先使用userId字段，如果不存在则尝试使用id字段
+    int? userId = json['userId'] as int?;
+    int? id = json['id'] as int?;
+    
     return UserModel(
-      userId: json['userId'] as int?,
+      userId: userId ?? id, // 优先使用userId字段，如果为空则用id字段的值
+      id: id,
       username: json['username'] as String?,
       mobile: json['mobile'] as String?,
       email: json['email'] as String?,
@@ -99,6 +108,7 @@ class UserModel {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     if (userId != null) data['userId'] = userId;
+    if (id != null) data['id'] = id;
     if (username != null) data['username'] = username;
     if (mobile != null) data['mobile'] = mobile;
     if (email != null) data['email'] = email;

@@ -17,6 +17,7 @@ dependencies:
   image_picker: ^1.1.2
   socket_io_client: ^1.0.2  # 使用支持空安全且与 Socket.IO v2.x 服务器兼容的版本
   intl: ^0.19.0  # 国际化和日期时间格式化
+  pull_to_refresh: ^2.0.0  # 下拉刷新和上拉加载更多控件
 
 dev_dependencies:
   flutter_test:
