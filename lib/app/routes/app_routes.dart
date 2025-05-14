@@ -24,6 +24,8 @@ abstract class Routes {
   static const RESUME_ONLINE_VIEW = _Paths.RESUME_ONLINE_VIEW;
   static const RESUME_ATTACHMENT_UPLOAD = _Paths.RESUME_ATTACHMENT_UPLOAD;
   static const RESUME_ATTACHMENT_VIEW = _Paths.RESUME_ATTACHMENT_VIEW;
+  static const CERTIFICATE_LIST = _Paths.CERTIFICATE_LIST;
+  static const CERTIFICATE_EDIT = _Paths.CERTIFICATE_EDIT;
 }
 
 abstract class _Paths {
@@ -50,4 +52,6 @@ abstract class _Paths {
   static const RESUME_ONLINE_VIEW = '/resume-online-view';
   static const RESUME_ATTACHMENT_UPLOAD = '/resume-attachment-upload';
   static const RESUME_ATTACHMENT_VIEW = '/resume-attachment-view';
+  static const CERTIFICATE_LIST = '/certificate-list';
+  static const CERTIFICATE_EDIT = '/certificate-edit';
 }

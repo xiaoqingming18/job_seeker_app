@@ -195,7 +195,7 @@ class ProfilePage extends GetView<HomeController> {
                                   // 功能卡片3：我的证书
                                   GestureDetector(
                                     onTap: () {
-                                      Get.snackbar('提示', '我的证书功能正在开发中...');
+                                      Get.toNamed(Routes.CERTIFICATE_LIST);
                                     },
                                     child: Column(
                                       children: const [

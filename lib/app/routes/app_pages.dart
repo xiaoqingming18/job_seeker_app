@@ -43,6 +43,10 @@ import '../modules/resume/bindings/resume_online_edit_binding.dart';
 import '../modules/resume/bindings/resume_online_view_binding.dart';
 import '../modules/resume/bindings/resume_attachment_upload_binding.dart';
 import '../modules/resume/bindings/resume_attachment_view_binding.dart';
+import '../modules/certificate/views/certificate_list_view.dart';
+import '../modules/certificate/views/certificate_edit_view.dart';
+import '../modules/certificate/bindings/certificate_list_binding.dart';
+import '../modules/certificate/bindings/certificate_edit_binding.dart';
 
 part 'app_routes.dart';
 
@@ -200,6 +204,20 @@ class AppPages {
       name: _Paths.RESUME_ATTACHMENT_VIEW,
       page: () => const ResumeAttachmentViewView(),
       binding: ResumeAttachmentViewBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.CERTIFICATE_LIST,
+      page: () => const CertificateListView(),
+      binding: CertificateListBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.CERTIFICATE_EDIT,
+      page: () => const CertificateEditView(),
+      binding: CertificateEditBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 250),
     ),
