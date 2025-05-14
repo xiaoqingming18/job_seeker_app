@@ -4,10 +4,15 @@ import '../../../models/labor_demand_model.dart';
 import '../../../models/job_application_model.dart';
 import '../../../services/api/labor_demand_api_service.dart';
 import '../../../services/api/job_application_api_service.dart';
+import '../../../services/api/im_api_service.dart';
+import '../../../services/api/user_api_service.dart';
+import '../../../routes/app_pages.dart';
 
 class JobDetailController extends GetxController {
   final LaborDemandApiService _laborDemandApiService = LaborDemandApiService();
   final JobApplicationApiService _jobApplicationApiService = JobApplicationApiService();
+  final ImApiService _imApiService = ImApiService();
+  final UserApiService _userApiService = UserApiService();
 
   // 职位详情数据
   final Rx<LaborDemandModel?> jobDetail = Rx<LaborDemandModel?>(null);
@@ -20,6 +25,9 @@ class JobDetailController extends GetxController {
   // 申请相关控制
   final isSubmitting = false.obs;
   final submissionSuccess = false.obs;
+  
+  // 聊天相关状态
+  final isCreatingConversation = false.obs;
 
   // 申请表单控制器
   late TextEditingController selfIntroductionController;
@@ -271,6 +279,54 @@ class JobDetailController extends GetxController {
     
     if (picked != null) {
       expectedStartDateController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+    }
+  }
+
+  /// 与项目经理沟通
+  Future<void> chatWithProjectManager() async {
+    if (jobDetail.value == null || jobDetail.value?.projectManagerId == null) {
+      Get.snackbar('提示', '无法获取项目经理信息');
+      return;
+    }
+    
+    try {
+      isCreatingConversation.value = true;
+      
+      // 获取当前用户ID
+      final userInfo = await _userApiService.verifyToken();
+      if (!userInfo.isSuccess || userInfo.data == null) {
+        Get.snackbar('提示', '无法获取当前用户信息，请重新登录');
+        return;
+      }
+      
+      final currentUserId = userInfo.data!.userId;
+      final projectManagerId = jobDetail.value!.projectManagerId;
+      
+      if (currentUserId == null) {
+        Get.snackbar('提示', '用户信息不完整，请重新登录');
+        return;
+      }
+      
+      // 获取或创建与项目经理的会话（此方法会先检查是否存在会话）
+      final conversation = await _imApiService.getSingleConversation(
+        currentUserId,
+        projectManagerId!
+      );
+      
+      // 打开聊天详情页
+      Get.toNamed(
+        Routes.CHAT_DETAIL,
+        parameters: {
+          'id': conversation['id'].toString(),
+          'targetUserId': projectManagerId.toString(),
+          'isGroup': 'false',
+        },
+      );
+    } catch (e) {
+      Get.snackbar('提示', '创建会话失败: $e');
+      print('创建会话异常: $e');
+    } finally {
+      isCreatingConversation.value = false;
     }
   }
 } 

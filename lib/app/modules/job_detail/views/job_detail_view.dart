@@ -318,6 +318,27 @@ class JobDetailView extends GetView<JobDetailController> {
           ),
           const SizedBox(width: 12),
           Expanded(
+            flex: 1,
+            child: Obx(() => OutlinedButton.icon(
+              onPressed: controller.isCreatingConversation.value
+                  ? null
+                  : () => controller.chatWithProjectManager(),
+              icon: controller.isCreatingConversation.value
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.chat_outlined),
+              label: const Text('沟通'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                foregroundColor: Colors.blue,
+              ),
+            )),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             flex: 2,
             child: ElevatedButton.icon(
               onPressed: () => controller.showApplicationForm(),

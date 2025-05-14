@@ -260,4 +260,66 @@ class ImApiService {
       throw Exception('发送媒体消息异常: $e');
     }
   }
+  
+  /// 获取或创建两个用户之间的单聊会话
+  /// [userIdA] 用户A的ID
+  /// [userIdB] 用户B的ID
+  Future<Map<String, dynamic>> getSingleConversation(int userIdA, int userIdB) async {
+    try {
+      final response = await _httpClient.get(
+        '/api/im/conversations/single',
+        queryParameters: {
+          'userIdA': userIdA,
+          'userIdB': userIdB,
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        
+        if (responseData['code'] == 0 && responseData['message'] == 'success') {
+          return Map<String, dynamic>.from(responseData['data'] ?? {});
+        } else {
+          throw Exception('获取单聊会话失败: ${responseData['message']}');
+        }
+      } else {
+        throw Exception('获取单聊会话请求失败，状态码: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw Exception('网络请求错误: ${e.message}');
+    } catch (e) {
+      throw Exception('获取单聊会话异常: $e');
+    }
+  }
+  
+  /// 创建单聊会话
+  /// [userIdA] 用户A的ID
+  /// [userIdB] 用户B的ID
+  Future<Map<String, dynamic>> createSingleConversation(int userIdA, int userIdB) async {
+    try {
+      final response = await _httpClient.post(
+        '/api/im/conversations/single',
+        data: {
+          'userIdA': userIdA,
+          'userIdB': userIdB,
+        },
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = response.data;
+        
+        if (responseData['code'] == 0 && responseData['message'] == 'success') {
+          return Map<String, dynamic>.from(responseData['data'] ?? {});
+        } else {
+          throw Exception('创建单聊会话失败: ${responseData['message']}');
+        }
+      } else {
+        throw Exception('创建单聊会话请求失败，状态码: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw Exception('网络请求错误: ${e.message}');
+    } catch (e) {
+      throw Exception('创建单聊会话异常: $e');
+    }
+  }
 } 

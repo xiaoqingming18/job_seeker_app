@@ -28,6 +28,9 @@ LaborDemandModel _$LaborDemandModelFromJson(Map<String, dynamic> json) =>
       createTime: json['createTime'] as String?,
       updateTime: json['updateTime'] as String?,
       companyName: json['companyName'] as String,
+      projectManagerId: json['projectManagerId'] == null
+          ? null
+          : (json['projectManagerId'] as num).toInt(),
     );
 
 Map<String, dynamic> _$LaborDemandModelToJson(LaborDemandModel instance) =>
@@ -52,6 +55,7 @@ Map<String, dynamic> _$LaborDemandModelToJson(LaborDemandModel instance) =>
       'createTime': instance.createTime,
       'updateTime': instance.updateTime,
       'companyName': instance.companyName,
+      'projectManagerId': instance.projectManagerId,
     };
 
 LaborDemandPageModel _$LaborDemandPageModelFromJson(

@@ -25,6 +25,7 @@ class LaborDemandModel {
   final String? createTime;
   final String? updateTime;
   final String companyName;
+  final int? projectManagerId; // 项目经理ID，用于沟通功能
 
   LaborDemandModel({
     required this.id,
@@ -47,6 +48,7 @@ class LaborDemandModel {
     this.createTime,
     this.updateTime,
     required this.companyName,
+    this.projectManagerId,
   });
 
   /// 从JSON映射到对象
