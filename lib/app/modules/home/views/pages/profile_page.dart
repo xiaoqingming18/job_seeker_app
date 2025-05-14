@@ -158,10 +158,10 @@ class ProfilePage extends GetView<HomeController> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 children: [
-                                  // 功能卡片1：在线简历
+                                  // 功能卡片1：我的简历
                                   GestureDetector(
                                     onTap: () {
-                                      Get.snackbar('提示', '在线简历功能正在开发中...');
+                                      Get.toNamed(Routes.RESUME_LIST);
                                     },
                                     child: Column(
                                       children: const [
@@ -171,28 +171,11 @@ class ProfilePage extends GetView<HomeController> {
                                           size: 32,
                                         ),
                                         SizedBox(height: 8),
-                                        Text('在线简历'),
+                                        Text('我的简历'),
                                       ],
                                     ),
                                   ),
-                                  // 功能卡片2：附件简历
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.snackbar('提示', '附件简历功能正在开发中...');
-                                    },
-                                    child: Column(
-                                      children: const [
-                                        Icon(
-                                          Icons.attach_file,
-                                          color: Colors.green,
-                                          size: 32,
-                                        ),
-                                        SizedBox(height: 8),
-                                        Text('附件简历'),
-                                      ],
-                                    ),
-                                  ),
-                                  // 功能卡片3：求职意向
+                                  // 功能卡片2：求职意向
                                   GestureDetector(
                                     onTap: () {
                                       Get.snackbar('提示', '求职意向功能正在开发中...');
@@ -206,6 +189,23 @@ class ProfilePage extends GetView<HomeController> {
                                         ),
                                         SizedBox(height: 8),
                                         Text('求职意向'),
+                                      ],
+                                    ),
+                                  ),
+                                  // 功能卡片3：我的证书
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.snackbar('提示', '我的证书功能正在开发中...');
+                                    },
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.card_membership,
+                                          color: Colors.green,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('我的证书'),
                                       ],
                                     ),
                                   ),

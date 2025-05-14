@@ -8,17 +8,17 @@ part of 'occupation_model.dart';
 
 OccupationModel _$OccupationModelFromJson(Map<String, dynamic> json) =>
     OccupationModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
-      categoryId: json['categoryId'] as int,
+      categoryId: (json['categoryId'] as num).toInt(),
       icon: json['icon'] as String?,
       description: json['description'] as String?,
       requiredCertificates: (json['requiredCertificates'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
       averageDailyWage: (json['averageDailyWage'] as num).toDouble(),
-      difficultyLevel: json['difficultyLevel'] as int,
-      status: json['status'] as int,
+      difficultyLevel: (json['difficultyLevel'] as num).toInt(),
+      status: (json['status'] as num).toInt(),
       createTime: json['createTime'] as String?,
       updateTime: json['updateTime'] as String?,
       categoryName: json['categoryName'] as String?,
@@ -52,4 +52,4 @@ Map<String, dynamic> _$HotOccupationsResponseToJson(
         HotOccupationsResponse instance) =>
     <String, dynamic>{
       'data': instance.data,
-    }; 
+    };

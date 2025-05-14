@@ -6,45 +6,38 @@ part of 'job_application_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-JobApplicationRequest _$JobApplicationRequestFromJson(Map<String, dynamic> json) =>
+JobApplicationRequest _$JobApplicationRequestFromJson(
+        Map<String, dynamic> json) =>
     JobApplicationRequest(
-      demandId: json['demandId'] as int,
+      demandId: (json['demandId'] as num).toInt(),
       selfIntroduction: json['selfIntroduction'] as String?,
       expectedSalary: (json['expectedSalary'] as num?)?.toDouble(),
       expectedStartDate: json['expectedStartDate'] as String?,
     );
 
-Map<String, dynamic> _$JobApplicationRequestToJson(JobApplicationRequest instance) {
-  final val = <String, dynamic>{
-    'demandId': instance.demandId,
-  };
-
-  void writeNotNull(String key, dynamic value) {
-    if (value != null) {
-      val[key] = value;
-    }
-  }
-
-  writeNotNull('selfIntroduction', instance.selfIntroduction);
-  writeNotNull('expectedSalary', instance.expectedSalary);
-  writeNotNull('expectedStartDate', instance.expectedStartDate);
-  return val;
-}
+Map<String, dynamic> _$JobApplicationRequestToJson(
+        JobApplicationRequest instance) =>
+    <String, dynamic>{
+      'demandId': instance.demandId,
+      'selfIntroduction': instance.selfIntroduction,
+      'expectedSalary': instance.expectedSalary,
+      'expectedStartDate': instance.expectedStartDate,
+    };
 
 JobApplicationResponse _$JobApplicationResponseFromJson(
         Map<String, dynamic> json) =>
     JobApplicationResponse(
-      id: json['id'] as int?,
-      jobSeekerId: json['jobSeekerId'] as int?,
+      id: (json['id'] as num?)?.toInt(),
+      jobSeekerId: (json['jobSeekerId'] as num?)?.toInt(),
       jobSeekerName: json['jobSeekerName'] as String?,
       jobSeekerGender: json['jobSeekerGender'] as String?,
-      jobSeekerAge: json['jobSeekerAge'] as int?,
-      jobSeekerWorkYears: json['jobSeekerWorkYears'] as int?,
+      jobSeekerAge: (json['jobSeekerAge'] as num?)?.toInt(),
+      jobSeekerWorkYears: (json['jobSeekerWorkYears'] as num?)?.toInt(),
       jobSeekerSkill: json['jobSeekerSkill'] as String?,
       resumeUrl: json['resumeUrl'] as String?,
-      demandId: json['demandId'] as int?,
+      demandId: (json['demandId'] as num?)?.toInt(),
       demandTitle: json['demandTitle'] as String?,
-      projectId: json['projectId'] as int?,
+      projectId: (json['projectId'] as num?)?.toInt(),
       projectName: json['projectName'] as String?,
       selfIntroduction: json['selfIntroduction'] as String?,
       expectedEntryDate: json['expectedEntryDate'] as String?,
@@ -52,37 +45,29 @@ JobApplicationResponse _$JobApplicationResponseFromJson(
       status: json['status'] as String?,
       rejectionReason: json['rejectionReason'] as String?,
       createTime: json['createTime'] as String?,
-      interviews: json['interviews'] as List<dynamic>?,
+      interviews: json['interviews'] as List<dynamic>? ?? const [],
     );
 
 Map<String, dynamic> _$JobApplicationResponseToJson(
-        JobApplicationResponse instance) {
-  final val = <String, dynamic>{};
-
-  void writeNotNull(String key, dynamic value) {
-    if (value != null) {
-      val[key] = value;
-    }
-  }
-
-  writeNotNull('id', instance.id);
-  writeNotNull('jobSeekerId', instance.jobSeekerId);
-  writeNotNull('jobSeekerName', instance.jobSeekerName);
-  writeNotNull('jobSeekerGender', instance.jobSeekerGender);
-  writeNotNull('jobSeekerAge', instance.jobSeekerAge);
-  writeNotNull('jobSeekerWorkYears', instance.jobSeekerWorkYears);
-  writeNotNull('jobSeekerSkill', instance.jobSeekerSkill);
-  writeNotNull('resumeUrl', instance.resumeUrl);
-  writeNotNull('demandId', instance.demandId);
-  writeNotNull('demandTitle', instance.demandTitle);
-  writeNotNull('projectId', instance.projectId);
-  writeNotNull('projectName', instance.projectName);
-  writeNotNull('selfIntroduction', instance.selfIntroduction);
-  writeNotNull('expectedEntryDate', instance.expectedEntryDate);
-  writeNotNull('expectedSalary', instance.expectedSalary);
-  writeNotNull('status', instance.status);
-  writeNotNull('rejectionReason', instance.rejectionReason);
-  writeNotNull('createTime', instance.createTime);
-  writeNotNull('interviews', instance.interviews);
-  return val;
-} 
+        JobApplicationResponse instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'jobSeekerId': instance.jobSeekerId,
+      'jobSeekerName': instance.jobSeekerName,
+      'jobSeekerGender': instance.jobSeekerGender,
+      'jobSeekerAge': instance.jobSeekerAge,
+      'jobSeekerWorkYears': instance.jobSeekerWorkYears,
+      'jobSeekerSkill': instance.jobSeekerSkill,
+      'resumeUrl': instance.resumeUrl,
+      'demandId': instance.demandId,
+      'demandTitle': instance.demandTitle,
+      'projectId': instance.projectId,
+      'projectName': instance.projectName,
+      'selfIntroduction': instance.selfIntroduction,
+      'expectedEntryDate': instance.expectedEntryDate,
+      'expectedSalary': instance.expectedSalary,
+      'status': instance.status,
+      'rejectionReason': instance.rejectionReason,
+      'createTime': instance.createTime,
+      'interviews': instance.interviews,
+    };

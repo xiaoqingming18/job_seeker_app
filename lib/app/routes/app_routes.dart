@@ -19,6 +19,11 @@ abstract class Routes {
   static const PERFORMANCE_DETAIL = _Paths.PERFORMANCE_DETAIL;
   static const SALARY = _Paths.SALARY;
   static const SALARY_DETAIL = _Paths.SALARY_DETAIL;
+  static const RESUME_LIST = _Paths.RESUME_LIST;
+  static const RESUME_ONLINE_EDIT = _Paths.RESUME_ONLINE_EDIT;
+  static const RESUME_ONLINE_VIEW = _Paths.RESUME_ONLINE_VIEW;
+  static const RESUME_ATTACHMENT_UPLOAD = _Paths.RESUME_ATTACHMENT_UPLOAD;
+  static const RESUME_ATTACHMENT_VIEW = _Paths.RESUME_ATTACHMENT_VIEW;
 }
 
 abstract class _Paths {
@@ -40,4 +45,9 @@ abstract class _Paths {
   static const PERFORMANCE_DETAIL = '/performance-detail';
   static const SALARY = '/salary';
   static const SALARY_DETAIL = '/salary-detail';
+  static const RESUME_LIST = '/resume-list';
+  static const RESUME_ONLINE_EDIT = '/resume-online-edit';
+  static const RESUME_ONLINE_VIEW = '/resume-online-view';
+  static const RESUME_ATTACHMENT_UPLOAD = '/resume-attachment-upload';
+  static const RESUME_ATTACHMENT_VIEW = '/resume-attachment-view';
 }

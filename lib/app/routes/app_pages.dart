@@ -33,6 +33,16 @@ import '../modules/salary/views/salary_view.dart';
 import '../modules/salary/views/salary_detail_view.dart';
 import '../modules/salary/bindings/salary_binding.dart';
 import '../modules/salary/bindings/salary_detail_binding.dart';
+import '../modules/resume/views/resume_list_view.dart';
+import '../modules/resume/views/resume_online_edit_view.dart';
+import '../modules/resume/views/resume_online_view_view.dart';
+import '../modules/resume/views/resume_attachment_upload_view.dart';
+import '../modules/resume/views/resume_attachment_view_view.dart';
+import '../modules/resume/bindings/resume_list_binding.dart';
+import '../modules/resume/bindings/resume_online_edit_binding.dart';
+import '../modules/resume/bindings/resume_online_view_binding.dart';
+import '../modules/resume/bindings/resume_attachment_upload_binding.dart';
+import '../modules/resume/bindings/resume_attachment_view_binding.dart';
 
 part 'app_routes.dart';
 
@@ -155,6 +165,41 @@ class AppPages {
       name: _Paths.SALARY_DETAIL,
       page: () => const SalaryDetailView(),
       binding: SalaryDetailBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.RESUME_LIST,
+      page: () => const ResumeListView(),
+      binding: ResumeListBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.RESUME_ONLINE_EDIT,
+      page: () => const ResumeOnlineEditView(),
+      binding: ResumeOnlineEditBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.RESUME_ONLINE_VIEW,
+      page: () => const ResumeOnlineViewView(),
+      binding: ResumeOnlineViewBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.RESUME_ATTACHMENT_UPLOAD,
+      page: () => const ResumeAttachmentUploadView(),
+      binding: ResumeAttachmentUploadBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: _Paths.RESUME_ATTACHMENT_VIEW,
+      page: () => const ResumeAttachmentViewView(),
+      binding: ResumeAttachmentViewBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 250),
     ),
