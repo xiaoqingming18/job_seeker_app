@@ -121,7 +121,7 @@ class CertificateListView extends GetView<CertificateListController> {
                   topRight: Radius.circular(12),
                 ),
                 child: Image.network(
-                  certificate.imageUrl!,
+                  certificate.fullImageUrl,
                   height: 150,
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -306,7 +306,7 @@ class CertificateListView extends GetView<CertificateListController> {
                   topRight: Radius.circular(16),
                 ),
                 child: Image.network(
-                  certificate.imageUrl!,
+                  certificate.fullImageUrl,
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,

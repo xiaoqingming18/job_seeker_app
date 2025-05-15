@@ -484,6 +484,22 @@ class CertificateEditView extends GetView<CertificateEditController> {
 
   // 构建网络图片
   Widget _buildNetworkImage(String url) {
+    // 处理URL，确保是完整URL
+    String fullUrl = url;
+    if (url.isNotEmpty && !url.startsWith('http://') && !url.startsWith('https://')) {
+      // 使用MinIO服务器的地址
+      const String minioServerUrl = 'http://192.168.200.60:9000';
+      const String minioBucket = 'job-server';
+      
+      // 修正URL格式
+      if (!url.startsWith('/')) {
+        fullUrl = '/$url';
+      }
+      
+      // 构建完整URL
+      fullUrl = '$minioServerUrl/$minioBucket$fullUrl';
+    }
+    
     return Stack(
       children: [
         Container(
@@ -496,9 +512,10 @@ class CertificateEditView extends GetView<CertificateEditController> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.network(
-              url,
+              fullUrl,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
+                print('图片加载错误: $error, URL: $fullUrl');
                 return const Center(
                   child: Icon(
                     Icons.image_not_supported,

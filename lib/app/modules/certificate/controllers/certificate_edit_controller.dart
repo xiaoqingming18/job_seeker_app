@@ -314,8 +314,8 @@ class CertificateEditController extends GetxController {
       return;
     }
     
-    // 如果是编辑模式，但没有任何图片(原有图片或新选择的图片)，提示上传
-    if (isEditMode.value && certificateImage.value == null && imageUrl.value.isEmpty) {
+    // 如果没有上传证书图片，提示上传
+    if (certificateImage.value == null && imageUrl.value.isEmpty) {
       Get.snackbar('错误', '请上传证书图片');
       return;
     }

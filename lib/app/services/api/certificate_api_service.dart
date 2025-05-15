@@ -233,7 +233,30 @@ class CertificateApiService extends GetxService {
         response.data,
         (json) => json as Map<String, dynamic>
       );
-      return data.data!['image_url'] as String;
+      
+      // 获取服务器返回的图片URL
+      String imageUrl = data.data!['image_url'] as String;
+      print('服务器返回的原始图片URL: $imageUrl');
+      
+      // 如果URL已经是完整URL，直接返回
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+      }
+      
+      // 使用MinIO服务器的地址
+      const String minioServerUrl = 'http://192.168.200.60:9000';
+      const String minioBucket = 'job-server';
+      
+      // 修正URL格式（处理确切的返回格式：certificate/image/xxx.png）
+      if (!imageUrl.startsWith('/')) {
+        imageUrl = '/$imageUrl';
+      }
+      
+      // 构建完整URL: http://ip:port/bucket/path
+      final String fullUrl = '$minioServerUrl/$minioBucket$imageUrl';
+      print('处理后的完整图片URL: $fullUrl');
+      
+      return fullUrl;
     } catch (e) {
       print('上传证书图片错误: $e');
       rethrow;

@@ -78,6 +78,31 @@ class Certificate {
         return '#F44336'; // 红色
     }
   }
+  
+  // 返回完整的图片URL，处理可能不完整的URL
+  String get fullImageUrl {
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      return '';
+    }
+    
+    // 如果已经是完整URL，直接返回
+    if (imageUrl!.startsWith('http://') || imageUrl!.startsWith('https://')) {
+      return imageUrl!;
+    }
+    
+    // 使用MinIO服务器的地址
+    const String minioServerUrl = 'http://192.168.200.60:9000';
+    const String minioBucket = 'job-server';
+    
+    // 修正URL格式
+    String formattedUrl = imageUrl!;
+    if (!formattedUrl.startsWith('/')) {
+      formattedUrl = '/$formattedUrl';
+    }
+    
+    // 构建完整URL
+    return '$minioServerUrl/$minioBucket$formattedUrl';
+  }
 }
 
 /// 证书类型模型
